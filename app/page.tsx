@@ -5,7 +5,7 @@ import Feed from "./components/Feed";
 
 export default function Home() {
   const [text, setText] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   async function analyze() {
@@ -23,7 +23,12 @@ export default function Home() {
       });
 
       const data = await res.json();
-      setResult(data);
+
+      // 🧠 ADD NEW RESULT TO TOP OF FEED
+      setResults((prev) => [data, ...prev]);
+
+      // clear input after submit
+      setText("");
     } catch (error) {
       console.error(error);
     } finally {
@@ -37,7 +42,7 @@ export default function Home() {
       <div style={{ textAlign: "center", padding: 32 }}>
         <h1>Base Interpretation Feed</h1>
         <p style={{ color: "#5B6472" }}>
-          Paste a Base upgrade announcement and get a clear breakdown
+          Track and understand Base upgrades in real time
         </p>
 
         {/* INPUT */}
@@ -77,8 +82,8 @@ export default function Home() {
         </button>
       </div>
 
-      {/* RESULT UI */}
-      <Feed result={result} />
+      {/* FEED */}
+      <Feed results={results} />
     </main>
   );
 }
