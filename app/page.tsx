@@ -1,12 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Feed from "./components/Feed";
 
 export default function Home() {
   const [text, setText] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // 🧠 LOAD SAVED FEED ON PAGE LOAD
+  useEffect(() => {
+    const saved = localStorage.getItem("upgrade_feed");
+    if (saved) {
+      setResults(JSON.parse(saved));
+    }
+  }, []);
+
+  // 🧠 SAVE FEED EVERY TIME IT CHANGES
+  useEffect(() => {
+    localStorage.setItem("upgrade_feed", JSON.stringify(results));
+  }, [results]);
 
   async function analyze() {
     if (!text.trim()) return;
@@ -24,16 +37,21 @@ export default function Home() {
 
       const data = await res.json();
 
-      // 🧠 ADD NEW RESULT TO TOP OF FEED
+      // ADD NEW RESULT TO TOP
       setResults((prev) => [data, ...prev]);
 
-      // clear input after submit
       setText("");
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+  }
+
+  // 🧠 CLEAR FEED FUNCTION
+  function clearFeed() {
+    setResults([]);
+    localStorage.removeItem("upgrade_feed");
   }
 
   return (
@@ -61,7 +79,7 @@ export default function Home() {
           }}
         />
 
-        {/* BUTTON */}
+        {/* BUTTONS */}
         <br />
 
         <button
@@ -80,6 +98,24 @@ export default function Home() {
         >
           {loading ? "Analyzing..." : "Analyze Upgrade"}
         </button>
+
+        {/* CLEAR BUTTON */}
+        {results.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <button
+              onClick={clearFeed}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#888",
+                cursor: "pointer",
+                fontSize: 12
+              }}
+            >
+              Clear feed
+            </button>
+          </div>
+        )}
       </div>
 
       {/* FEED */}
