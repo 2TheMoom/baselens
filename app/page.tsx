@@ -25,8 +25,7 @@ export default function Home() {
       const data = await res.json();
       setResult(data);
     } catch (error) {
-      console.error("Error:", error);
-      setResult({ error: "Something went wrong" });
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -34,6 +33,7 @@ export default function Home() {
 
   return (
     <main style={{ background: "#F6F3EE", minHeight: "100vh" }}>
+      {/* HEADER */}
       <div style={{ textAlign: "center", padding: 32 }}>
         <h1>Base Interpretation Feed</h1>
         <p style={{ color: "#5B6472" }}>
@@ -51,7 +51,7 @@ export default function Home() {
             height: 120,
             marginTop: 20,
             padding: 12,
-            borderRadius: 8,
+            borderRadius: 10,
             border: "1px solid #ddd"
           }}
         />
@@ -65,7 +65,7 @@ export default function Home() {
           style={{
             marginTop: 12,
             padding: "10px 20px",
-            borderRadius: 8,
+            borderRadius: 10,
             border: "none",
             background: "#111",
             color: "#fff",
@@ -77,25 +77,8 @@ export default function Home() {
         </button>
       </div>
 
-      {/* RESULT DISPLAY */}
-      {result && (
-        <div style={{ maxWidth: 800, margin: "20px auto", padding: 20 }}>
-          <pre
-            style={{
-              background: "#fff",
-              padding: 16,
-              borderRadius: 10,
-              border: "1px solid #eee",
-              overflowX: "auto"
-            }}
-          >
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {/* EXISTING MOCK FEED BELOW */}
-      <Feed />
+      {/* RESULT UI */}
+      <Feed result={result} />
     </main>
   );
 }

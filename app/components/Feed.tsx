@@ -1,12 +1,15 @@
-import { mockUpgrades } from "../data/mockUpgrades";
 import UpgradeCard from "./UpgradeCard";
 
-export default function Feed() {
+type Props = {
+  result: any;
+};
+
+export default function Feed({ result }: Props) {
+  if (!result) return null;
+
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      {mockUpgrades.map((upgrade, i) => (
-        <UpgradeCard key={i} upgrade={upgrade} />
-      ))}
+    <div style={{ maxWidth: 800, margin: "20px auto", padding: 20 }}>
+      <UpgradeCard data={result} />
     </div>
   );
 }
