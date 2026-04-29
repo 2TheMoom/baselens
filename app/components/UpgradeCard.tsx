@@ -13,40 +13,52 @@ export default function UpgradeCard({ data }: Props) {
         borderRadius: 16,
         padding: 20,
         marginBottom: 20,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
       }}
     >
       {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2 style={{ margin: 0 }}>{data.title}</h2>
 
-        <span
-          style={{
-            fontSize: 12,
-            padding: "4px 10px",
-            borderRadius: 20,
-            background:
-              data.impact_level === "High"
-                ? "#FFECEC"
-                : data.impact_level === "Medium"
-                ? "#FFF6E5"
-                : "#EEF6FF",
-            color:
-              data.impact_level === "High"
-                ? "#D64545"
-                : data.impact_level === "Medium"
-                ? "#B78103"
-                : "#2F6FED"
-          }}
-        >
+        <span style={impactStyle(data.impact_level)}>
           {data.impact_level}
         </span>
       </div>
 
-      {/* SUMMARY */}
-      <p style={{ color: "#5B6472", marginTop: 10 }}>{data.summary}</p>
+      {/* CATEGORY */}
+      {data.category && (
+        <div style={{ marginTop: 6 }}>
+          <span style={categoryStyle}>
+            {data.category}
+          </span>
+        </div>
+      )}
 
-      {/* SECTIONS */}
+      {/* SUMMARY */}
+      <p style={{ color: "#5B6472", marginTop: 10 }}>
+        {data.summary}
+      </p>
+
+      {/* SIGNIFICANCE (NEW ⭐) */}
+      {data.significance_reason && (
+        <div
+          style={{
+            background: "#F9F7F3",
+            padding: 12,
+            borderRadius: 10,
+            marginTop: 12
+          }}
+        >
+          <strong style={{ fontSize: 13 }}>
+            Why this matters
+          </strong>
+          <p style={{ margin: 0, color: "#6B7280" }}>
+            {data.significance_reason}
+          </p>
+        </div>
+      )}
+
+      {/* DETAILS */}
       <Section title="What changed" content={data.what_changed} />
       <Section title="Why it changed" content={data.why_it_changed} />
       <Section title="User impact" content={data.user_impact} />
@@ -63,3 +75,44 @@ function Section({ title, content }: any) {
     </div>
   );
 }
+
+// 🎯 Impact badge styling
+function impactStyle(level: string) {
+  if (level === "High") {
+    return {
+      fontSize: 12,
+      padding: "4px 10px",
+      borderRadius: 20,
+      background: "#FFECEC",
+      color: "#D64545"
+    };
+  }
+
+  if (level === "Medium") {
+    return {
+      fontSize: 12,
+      padding: "4px 10px",
+      borderRadius: 20,
+      background: "#FFF6E5",
+      color: "#B78103"
+    };
+  }
+
+  return {
+    fontSize: 12,
+    padding: "4px 10px",
+    borderRadius: 20,
+    background: "#EEF6FF",
+    color: "#2F6FED"
+  };
+}
+
+// 🏷️ Category badge
+const categoryStyle = {
+  fontSize: 11,
+  padding: "3px 8px",
+  borderRadius: 20,
+  background: "#EFEDE8",
+  color: "#555",
+  display: "inline-block"
+};
