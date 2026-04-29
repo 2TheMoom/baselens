@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Feed from "./components/Feed";
 import { createClient } from "@supabase/supabase-js";
 
-// 🔧 Initialize Supabase
+// 🔧 Supabase init
 const supabase = createClient(
   "https://wqzcqnhtiujalriciydy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxemNxbmh0aXVqYWxyaWNpeWR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDUyMzcsImV4cCI6MjA5Mjk4MTIzN30.w0pSXvGxdDKBD_2-zsxJzcujv8rJD0IgGRufhbgd3Y8"
@@ -15,7 +15,7 @@ export default function Home() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 📥 LOAD DATA FROM SUPABASE ON PAGE LOAD
+  // 📥 Load from DB
   useEffect(() => {
     async function loadData() {
       const { data, error } = await supabase
@@ -26,14 +26,14 @@ export default function Home() {
       if (!error && data) {
         setResults(data);
       } else {
-        console.error("Supabase fetch error:", error);
+        console.error("Fetch error:", error);
       }
     }
 
     loadData();
   }, []);
 
-  // 🤖 ANALYZE FUNCTION
+  // 🤖 Analyze
   async function analyze() {
     if (!text.trim()) return;
 
@@ -50,33 +50,33 @@ export default function Home() {
 
       const data = await res.json();
 
-      // ❌ Handle AI errors
       if (data.error) {
-        console.error("AI Error:", data);
+        console.error("AI error:", data);
         return;
       }
 
-      // 💾 SAVE TO SUPABASE
+      // 💾 Save to Supabase (includes new fields)
       const { error } = await supabase.from("upgrades").insert([
         {
           title: data.title,
           summary: data.summary,
+          category: data.category,
           what_changed: data.what_changed,
           why_it_changed: data.why_it_changed,
           user_impact: data.user_impact,
           developer_impact: data.developer_impact,
+          significance_reason: data.significance_reason,
           impact_level: data.impact_level
         }
       ]);
 
       if (error) {
-        console.error("Supabase Insert Error:", error);
+        console.error("Insert error:", error);
       }
 
-      // 🧠 UPDATE UI
+      // 🧠 Update UI instantly
       setResults((prev) => [data, ...prev]);
 
-      // ✨ CLEAR INPUT
       setText("");
     } catch (err) {
       console.error("Analyze failed:", err);
@@ -85,22 +85,29 @@ export default function Home() {
     }
   }
 
+  // 🧹 Clear feed (UI only)
   function clearFeed() {
     setResults([]);
   }
 
+  // 🧪 Example handler
+  function useExample(example: string) {
+    setText(example);
+  }
+
   return (
     <main style={{ background: "#F6F3EE", minHeight: "100vh" }}>
-      {/* HEADER */}
       <div style={{ textAlign: "center", padding: 32 }}>
-        <h1>Base Interpretation Feed</h1>
-        <p style={{ color: "#5B6472" }}>
-          Track and understand Base upgrades in real time
+        <h1>Base Upgrade Intelligence</h1>
+
+        <p style={{ color: "#5B6472", maxWidth: 520, margin: "0 auto" }}>
+          Understand Base upgrades clearly. Paste an official announcement,
+          changelog, or release note to get structured insights.
         </p>
 
         {/* INPUT */}
         <textarea
-          placeholder="Paste Base upgrade announcement or description..."
+          placeholder="Paste a Base upgrade announcement, changelog, or release note..."
           value={text}
           onChange={(e) => setText(e.target.value)}
           style={{
@@ -114,14 +121,45 @@ export default function Home() {
           }}
         />
 
-        {/* BUTTON */}
+        {/* HELPER TEXT */}
+        <p style={{ fontSize: 12, color: "#8A94A6", marginTop: 8 }}>
+          This tool analyzes structured upgrade information — not general
+          questions.
+        </p>
+
+        {/* EXAMPLES */}
+        <div style={{ marginTop: 14 }}>
+          <button
+            onClick={() =>
+              useExample(
+                "Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network."
+              )
+            }
+            style={exampleBtn}
+          >
+            Example: Base Azul
+          </button>
+
+          <button
+            onClick={() =>
+              useExample(
+                "Base update improves gas efficiency and lowers transaction fees through batching optimizations."
+              )
+            }
+            style={exampleBtn}
+          >
+            Example: Gas Optimization
+          </button>
+        </div>
+
+        {/* ANALYZE BUTTON */}
         <br />
 
         <button
           onClick={analyze}
           disabled={!text.trim() || loading}
           style={{
-            marginTop: 12,
+            marginTop: 16,
             padding: "10px 20px",
             borderRadius: 10,
             border: "none",
@@ -134,7 +172,7 @@ export default function Home() {
           {loading ? "Analyzing..." : "Analyze Upgrade"}
         </button>
 
-        {/* CLEAR BUTTON */}
+        {/* CLEAR FEED */}
         {results.length > 0 && (
           <div style={{ marginTop: 10 }}>
             <button
@@ -151,10 +189,36 @@ export default function Home() {
             </button>
           </div>
         )}
+
+        {/* HOW IT WORKS */}
+        <div style={{ marginTop: 20, fontSize: 13, color: "#6B7280" }}>
+          <p>How it works:</p>
+          <p>1. Paste an upgrade or changelog</p>
+          <p>2. AI analyzes the changes</p>
+          <p>3. Get a structured breakdown of impact</p>
+        </div>
       </div>
+
+      {/* EMPTY STATE */}
+      {results.length === 0 && (
+        <p style={{ textAlign: "center", color: "#8A94A6" }}>
+          No analyses yet. Use an example above to get started.
+        </p>
+      )}
 
       {/* FEED */}
       <Feed results={results} />
     </main>
   );
 }
+
+// 🎨 Example button style
+const exampleBtn = {
+  margin: "4px",
+  padding: "6px 12px",
+  borderRadius: 20,
+  border: "1px solid #ddd",
+  background: "#fff",
+  cursor: "pointer",
+  fontSize: 12
+};
