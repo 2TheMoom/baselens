@@ -2,25 +2,38 @@
 
 import { useState, useEffect } from "react";
 import Feed from "./components/Feed";
+import { createClient } from "@supabase/supabase-js";
+
+// 🔧 Initialize Supabase
+const supabase = createClient(
+  "https://wqzcqnhtiujalriciydy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxemNxbmh0aXVqYWxyaWNpeWR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDUyMzcsImV4cCI6MjA5Mjk4MTIzN30.w0pSXvGxdDKBD_2-zsxJzcujv8rJD0IgGRufhbgd3Y8"
+);
 
 export default function Home() {
   const [text, setText] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 🧠 LOAD SAVED FEED ON PAGE LOAD
+  // 📥 LOAD DATA FROM SUPABASE ON PAGE LOAD
   useEffect(() => {
-    const saved = localStorage.getItem("upgrade_feed");
-    if (saved) {
-      setResults(JSON.parse(saved));
+    async function loadData() {
+      const { data, error } = await supabase
+        .from("upgrades")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setResults(data);
+      } else {
+        console.error("Supabase fetch error:", error);
+      }
     }
+
+    loadData();
   }, []);
 
-  // 🧠 SAVE FEED EVERY TIME IT CHANGES
-  useEffect(() => {
-    localStorage.setItem("upgrade_feed", JSON.stringify(results));
-  }, [results]);
-
+  // 🤖 ANALYZE FUNCTION
   async function analyze() {
     if (!text.trim()) return;
 
@@ -37,21 +50,43 @@ export default function Home() {
 
       const data = await res.json();
 
-      // ADD NEW RESULT TO TOP
+      // ❌ Handle AI errors
+      if (data.error) {
+        console.error("AI Error:", data);
+        return;
+      }
+
+      // 💾 SAVE TO SUPABASE
+      const { error } = await supabase.from("upgrades").insert([
+        {
+          title: data.title,
+          summary: data.summary,
+          what_changed: data.what_changed,
+          why_it_changed: data.why_it_changed,
+          user_impact: data.user_impact,
+          developer_impact: data.developer_impact,
+          impact_level: data.impact_level
+        }
+      ]);
+
+      if (error) {
+        console.error("Supabase Insert Error:", error);
+      }
+
+      // 🧠 UPDATE UI
       setResults((prev) => [data, ...prev]);
 
+      // ✨ CLEAR INPUT
       setText("");
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Analyze failed:", err);
     } finally {
       setLoading(false);
     }
   }
 
-  // 🧠 CLEAR FEED FUNCTION
   function clearFeed() {
     setResults([]);
-    localStorage.removeItem("upgrade_feed");
   }
 
   return (
@@ -79,7 +114,7 @@ export default function Home() {
           }}
         />
 
-        {/* BUTTONS */}
+        {/* BUTTON */}
         <br />
 
         <button
