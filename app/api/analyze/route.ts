@@ -2,41 +2,41 @@ export async function POST(req: Request) {
   try {
     const { text } = await req.json();
 
-    if (!process.env.OPENAI_API_KEY) {
+    // 🔒 PUT YOUR REAL OPENAI API KEY HERE
+    const OPENAI_API_KEY = "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";
+
+    if (!OPENAI_API_KEY) {
       return Response.json({ error: "API key missing" });
     }
 
     const systemPrompt = `
 You are an expert blockchain upgrade analyst.
 
-Your job is to break down protocol upgrades into clear, structured insights.
+Rules:
+- Always generate a UNIQUE and descriptive title
+- Avoid repeating generic titles like "Base Upgrade"
+- Make titles specific to the change
 
-Return ONLY valid JSON with these fields:
+Return ONLY valid JSON:
 
 {
   "title": string,
   "summary": string,
-  "category": string (one of: Performance, Security, UX, Developer Experience, Infrastructure),
+  "category": string,
   "what_changed": string,
   "why_it_changed": string,
   "user_impact": string,
   "developer_impact": string,
-  "significance_reason": string (explain WHY this upgrade matters in a deeper context),
-  "impact_level": string (High, Medium, Low)
+  "significance_reason": string,
+  "impact_level": "High" | "Medium" | "Low"
 }
-
-Rules:
-- Be concise but insightful
-- Avoid generic statements
-- Focus on real implications
-- No extra text outside JSON
 `;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        Authorization: `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
@@ -71,6 +71,7 @@ Rules:
         raw
       });
     }
+
   } catch (err: any) {
     return Response.json({
       error: "Server error",
