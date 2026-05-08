@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Feed from "./components/Feed";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "../lib/lsupabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 type UpgradeResult = {
   title: string;
@@ -22,26 +19,51 @@ type UpgradeResult = {
   _key?: number;
 };
 
+type User = {
+  id: string;
+  email?: string;
+};
+
 export default function Home() {
   const [text, setText] = useState("");
   const [results, setResults] = useState<UpgradeResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [recentInputs, setRecentInputs] = useState<string[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
+  // 🔐 Check auth
   useEffect(() => {
+    async function checkUser() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = "/login";
+        return;
+      }
+      setUser(session.user);
+      setAuthLoading(false);
+    }
+    checkUser();
+  }, []);
+
+  // 📥 Load from DB
+  useEffect(() => {
+    if (!user) return;
+
     async function loadData() {
       const { data, error } = await supabase
         .from("upgrades")
         .select("*")
+        .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (!error && data) setResults(data);
       else console.error("Fetch error:", error);
     }
     loadData();
-  }, []);
+  }, [user]);
 
   async function analyze() {
-    if (!text.trim()) return;
+    if (!text.trim() || !user) return;
 
     const normalizedInput = text.trim().toLowerCase();
     if (recentInputs.includes(normalizedInput)) {
@@ -69,6 +91,7 @@ export default function Home() {
       const { data: existing } = await supabase
         .from("upgrades")
         .select("id")
+        .eq("user_id", user.id)
         .ilike("title", data.title.trim())
         .limit(1);
 
@@ -87,7 +110,8 @@ export default function Home() {
         user_impact: data.user_impact,
         developer_impact: data.developer_impact,
         significance_reason: data.significance_reason,
-        impact_level: data.impact_level
+        impact_level: data.impact_level,
+        user_id: user.id
       }]);
 
       if (error) console.error("Insert error:", error);
@@ -101,6 +125,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
   }
 
   function clearFeed() {
@@ -124,17 +153,25 @@ export default function Home() {
     fontWeight: 500
   };
 
+  if (authLoading) {
+    return (
+      <main style={{ background: "#EDEAE4", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#6B7280", fontSize: 14 }}>Loading...</p>
+      </main>
+    );
+  }
+
   return (
-    <main style={{ background: "var(--background)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <main style={{ background: "#EDEAE4", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
 
       {/* HEADER */}
       <header style={{
-        borderBottom: "1px solid var(--border)",
+        borderBottom: "1px solid #D8D4CC",
         padding: "16px 32px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "var(--background)"
+        background: "#EDEAE4"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
@@ -146,15 +183,26 @@ export default function Home() {
           </div>
           <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.3px" }}>BaseLens</span>
         </div>
-        <span style={{
-          fontSize: 11,
-          letterSpacing: "0.08em",
-          color: "#6B7280",
-          textTransform: "uppercase",
-          fontWeight: 500
-        }}>
-          Base Upgrade Intelligence
-        </span>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 13, color: "#6B7280" }}>
+            {user?.email}
+          </span>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 8,
+              border: "1px solid #D8D4CC",
+              background: "transparent",
+              fontSize: 13,
+              color: "#6B7280",
+              cursor: "pointer"
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       {/* HERO */}
@@ -226,16 +274,10 @@ export default function Home() {
           {/* EXAMPLES */}
           <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
             <span style={{ fontSize: 12, color: "#6B7280", paddingTop: 6 }}>Try:</span>
-            <button
-              onClick={() => handleExample("Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network.")}
-              style={exampleBtn}
-            >
+            <button onClick={() => handleExample("Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network.")} style={exampleBtn}>
               Base Azul
             </button>
-            <button
-              onClick={() => handleExample("Base update improves gas efficiency and lowers transaction fees through batching optimizations.")}
-              style={exampleBtn}
-            >
+            <button onClick={() => handleExample("Base update improves gas efficiency and lowers transaction fees through batching optimizations.")} style={exampleBtn}>
               Gas Optimization
             </button>
           </div>
