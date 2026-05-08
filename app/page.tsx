@@ -6,13 +6,26 @@ import { createClient } from "@supabase/supabase-js";
 
 // 🔧 Supabase init
 const supabase = createClient(
-  "https://wqzcqnhtiujalriciydy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxemNxbmh0aXVqYWxyaWNpeWR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDUyMzcsImV4cCI6MjA5Mjk4MTIzN30.w0pSXvGxdDKBD_2-zsxJzcujv8rJD0IgGRufhbgd3Y8"
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+type UpgradeResult = {
+  title: string;
+  summary: string;
+  category: string;
+  what_changed: string;
+  why_it_changed: string;
+  user_impact: string;
+  developer_impact: string;
+  significance_reason: string;
+  impact_level: string;
+  _key?: number;
+};
 
 export default function Home() {
   const [text, setText] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<UpgradeResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   // 📥 Load from DB
@@ -51,11 +64,12 @@ export default function Home() {
       const data = await res.json();
 
       if (data.error) {
-        console.error("AI error:", data);
+        console.error("AI error:", data.error);
+        alert("Error: " + data.error);
         return;
       }
 
-      // 💾 Save to Supabase (includes new fields)
+      // 💾 Save to Supabase
       const { error } = await supabase.from("upgrades").insert([
         {
           title: data.title,
@@ -74,8 +88,9 @@ export default function Home() {
         console.error("Insert error:", error);
       }
 
-      // 🧠 Update UI instantly
-      setResults((prev) => [data, ...prev]);
+      // 🧠 Update UI instantly with unique key for animation
+      const newResult = { ...data, _key: Date.now() };
+      setResults((prev) => [newResult, ...prev]);
 
       setText("");
     } catch (err) {
@@ -91,7 +106,7 @@ export default function Home() {
   }
 
   // 🧪 Example handler
-  function useExample(example: string) {
+  function handleExample(example: string) {
     setText(example);
   }
 
@@ -131,7 +146,7 @@ export default function Home() {
         <div style={{ marginTop: 14 }}>
           <button
             onClick={() =>
-              useExample(
+              handleExample(
                 "Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network."
               )
             }
@@ -142,7 +157,7 @@ export default function Home() {
 
           <button
             onClick={() =>
-              useExample(
+              handleExample(
                 "Base update improves gas efficiency and lowers transaction fees through batching optimizations."
               )
             }
