@@ -27,6 +27,7 @@ export default function Home() {
   const [text, setText] = useState("");
   const [results, setResults] = useState<UpgradeResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recentInputs, setRecentInputs] = useState<string[]>([]);
 
   // 📥 Load from DB
   useEffect(() => {
@@ -50,6 +51,13 @@ export default function Home() {
   async function analyze() {
     if (!text.trim()) return;
 
+    // 🛡️ CHECK 1 — Same input text already analyzed this session
+    const normalizedInput = text.trim().toLowerCase();
+    if (recentInputs.includes(normalizedInput)) {
+      alert("You've already analyzed this text. Try a different announcement.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -66,6 +74,19 @@ export default function Home() {
       if (data.error) {
         console.error("AI error:", data.error);
         alert("Error: " + data.error);
+        return;
+      }
+
+      // 🛡️ CHECK 2 — Same title already exists in Supabase
+      const { data: existing } = await supabase
+        .from("upgrades")
+        .select("id")
+        .ilike("title", data.title.trim())
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        alert("This upgrade has already been analyzed. Check the feed below.");
+        setText("");
         return;
       }
 
@@ -88,6 +109,9 @@ export default function Home() {
         console.error("Insert error:", error);
       }
 
+      // ✅ Track this input to prevent re-analysis this session
+      setRecentInputs((prev) => [...prev, normalizedInput]);
+
       // 🧠 Update UI instantly with unique key for animation
       const newResult = { ...data, _key: Date.now() };
       setResults((prev) => [newResult, ...prev]);
@@ -103,6 +127,7 @@ export default function Home() {
   // 🧹 Clear feed (UI only)
   function clearFeed() {
     setResults([]);
+    setRecentInputs([]);
   }
 
   // 🧪 Example handler
