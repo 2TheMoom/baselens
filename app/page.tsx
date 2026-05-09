@@ -32,7 +32,6 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // 🔐 Check auth
   useEffect(() => {
     async function checkUser() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -46,7 +45,6 @@ export default function Home() {
     checkUser();
   }, []);
 
-  // 📥 Load from DB
   useEffect(() => {
     if (!user) return;
 
@@ -185,6 +183,14 @@ export default function Home() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <a href="/feed" style={{
+            fontSize: 13,
+            color: "#2563EB",
+            textDecoration: "none",
+            fontWeight: 500
+          }}>
+            Public Feed
+          </a>
           <span style={{ fontSize: 13, color: "#6B7280" }}>
             {user?.email}
           </span>
@@ -274,10 +280,16 @@ export default function Home() {
           {/* EXAMPLES */}
           <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
             <span style={{ fontSize: 12, color: "#6B7280", paddingTop: 6 }}>Try:</span>
-            <button onClick={() => handleExample("Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network.")} style={exampleBtn}>
+            <button
+              onClick={() => handleExample("Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network.")}
+              style={exampleBtn}
+            >
               Base Azul
             </button>
-            <button onClick={() => handleExample("Base update improves gas efficiency and lowers transaction fees through batching optimizations.")} style={exampleBtn}>
+            <button
+              onClick={() => handleExample("Base update improves gas efficiency and lowers transaction fees through batching optimizations.")}
+              style={exampleBtn}
+            >
               Gas Optimization
             </button>
           </div>
