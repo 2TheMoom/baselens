@@ -6,14 +6,22 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const GITHUB_API = "https://api.github.com/repos/ethereum-optimism/optimism/releases";
+// 🔵 Base-only GitHub sources
+const GITHUB_SOURCES = [
+  "https://api.github.com/repos/base-org/node/releases",
+  "https://api.github.com/repos/base-org/op-enclave/releases",
+  "https://api.github.com/repos/base-org/base-node/releases",
+  "https://api.github.com/repos/base-org/withdrawer/releases",
+  "https://api.github.com/repos/base-org/block-explorer/releases"
+];
 
 async function analyzeWithAI(text: string) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("Missing OpenAI key");
 
   const systemPrompt = `
-You are a senior blockchain upgrade analyst writing for a Web3 intelligence platform.
+You are a senior blockchain upgrade analyst writing for BaseLens, a Web3 intelligence platform focused on Base blockchain upgrades.
+Your job is to analyze Base blockchain upgrade announcements and return structured insights.
 Return ONLY valid JSON with no extra text, no markdown, no backticks:
 {
   "title": string,
@@ -55,87 +63,88 @@ Return ONLY valid JSON with no extra text, no markdown, no backticks:
 
 export async function GET() {
   try {
-    console.log("Auto-fetch started...");
-
-    // 🔍 Fetch latest releases from GitHub
-    const res = await fetch(GITHUB_API, {
-      headers: {
-        "User-Agent": "BaseLens-App",
-        Accept: "application/vnd.github.v3+json"
-      }
-    });
-
-    console.log("GitHub response status:", res.status);
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("GitHub fetch failed:", res.status, errText);
-      return NextResponse.json(
-        { error: `GitHub fetch failed: ${res.status} - ${errText}` },
-        { status: 500 }
-      );
-    }
-
-    const releases = await res.json();
-    console.log("Releases found:", releases?.length);
-
-    if (!releases || releases.length === 0) {
-      return NextResponse.json({ message: "No releases found" });
-    }
+    console.log("Auto-fetch started — Base-only sources...");
 
     let newCount = 0;
     let skippedCount = 0;
 
-    for (const release of releases.slice(0, 5)) {
-      const title = release.name || release.tag_name;
-      const body = release.body || "";
-      const sourceUrl = release.html_url;
+    for (const sourceUrl of GITHUB_SOURCES) {
+      console.log(`Fetching from: ${sourceUrl}`);
 
-      console.log(`Processing: ${title} | body length: ${body.length}`);
+      const res = await fetch(sourceUrl, {
+        headers: {
+          "User-Agent": "BaseLens-App",
+          Accept: "application/vnd.github.v3+json"
+        }
+      });
 
-      if (!body || body.length < 50) {
-        console.log(`Skipping ${title} - body too short`);
-        skippedCount++;
+      console.log(`Status for ${sourceUrl}: ${res.status}`);
+
+      if (!res.ok) {
+        console.log(`Skipping source - status ${res.status}`);
         continue;
       }
 
-      // 🛡️ Check if already analyzed
-      const { data: existing } = await supabase
-        .from("public_upgrades")
-        .select("id")
-        .eq("source_url", sourceUrl)
-        .limit(1);
+      const releases = await res.json();
 
-      if (existing && existing.length > 0) {
-        console.log(`Skipping ${title} - already exists`);
-        skippedCount++;
+      if (!releases || releases.length === 0) {
+        console.log(`No releases found for ${sourceUrl}`);
         continue;
       }
 
-      // 🤖 Analyze with AI
-      console.log(`Analyzing: ${title}`);
-      const content = `${title}\n\n${body}`;
-      const analyzed = await analyzeWithAI(content);
+      console.log(`Found ${releases.length} releases`);
 
-      // 💾 Save to public_upgrades
-      const { error } = await supabase.from("public_upgrades").insert([{
-        title: analyzed.title,
-        summary: analyzed.summary,
-        category: analyzed.category,
-        what_changed: analyzed.what_changed,
-        why_it_changed: analyzed.why_it_changed,
-        user_impact: analyzed.user_impact,
-        developer_impact: analyzed.developer_impact,
-        significance_reason: analyzed.significance_reason,
-        impact_level: analyzed.impact_level,
-        source_url: sourceUrl
-      }]);
+      for (const release of releases.slice(0, 3)) {
+        const title = release.name || release.tag_name;
+        const body = release.body || "";
+        const releaseUrl = release.html_url;
 
-      if (error) {
-        console.error("Insert error:", error);
-      } else {
-        console.log(`Saved: ${title}`);
-        newCount++;
+        console.log(`Processing: ${title} | body length: ${body.length}`);
+
+        if (!body || body.length < 50) {
+          console.log(`Skipping ${title} - body too short`);
+          skippedCount++;
+          continue;
+        }
+
+        // 🛡️ Check if already analyzed
+        const { data: existing } = await supabase
+          .from("public_upgrades")
+          .select("id")
+          .eq("source_url", releaseUrl)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          console.log(`Skipping ${title} - already exists`);
+          skippedCount++;
+          continue;
+        }
+
+        // 🤖 Analyze with AI
+        console.log(`Analyzing: ${title}`);
+        const content = `${title}\n\n${body}`;
+        const analyzed = await analyzeWithAI(content);
+
+        // 💾 Save to public_upgrades
+        const { error } = await supabase.from("public_upgrades").insert([{
+          title: analyzed.title,
+          summary: analyzed.summary,
+          category: analyzed.category,
+          what_changed: analyzed.what_changed,
+          why_it_changed: analyzed.why_it_changed,
+          user_impact: analyzed.user_impact,
+          developer_impact: analyzed.developer_impact,
+          significance_reason: analyzed.significance_reason,
+          impact_level: analyzed.impact_level,
+          source_url: releaseUrl
+        }]);
+
+        if (error) {
+          console.error("Insert error:", error);
+        } else {
+          console.log(`Saved: ${title}`);
+          newCount++;
+        }
       }
     }
 
