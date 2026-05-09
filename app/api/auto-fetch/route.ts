@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const GITHUB_API = "https://api.github.com/repos/base-org/node/releases";
+const GITHUB_API = "https://api.github.com/repos/ethereum-optimism/optimism/releases";
 
 async function analyzeWithAI(text: string) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -55,7 +55,9 @@ Return ONLY valid JSON with no extra text, no markdown, no backticks:
 
 export async function GET() {
   try {
-    // 🔍 Fetch latest releases from Base GitHub
+    console.log("Auto-fetch started...");
+
+    // 🔍 Fetch latest releases from GitHub
     const res = await fetch(GITHUB_API, {
       headers: {
         "User-Agent": "BaseLens-App",
@@ -63,11 +65,19 @@ export async function GET() {
       }
     });
 
+    console.log("GitHub response status:", res.status);
+
     if (!res.ok) {
-      return NextResponse.json({ error: "Failed to fetch GitHub releases" }, { status: 500 });
+      const errText = await res.text();
+      console.error("GitHub fetch failed:", res.status, errText);
+      return NextResponse.json(
+        { error: `GitHub fetch failed: ${res.status} - ${errText}` },
+        { status: 500 }
+      );
     }
 
     const releases = await res.json();
+    console.log("Releases found:", releases?.length);
 
     if (!releases || releases.length === 0) {
       return NextResponse.json({ message: "No releases found" });
@@ -81,7 +91,10 @@ export async function GET() {
       const body = release.body || "";
       const sourceUrl = release.html_url;
 
+      console.log(`Processing: ${title} | body length: ${body.length}`);
+
       if (!body || body.length < 50) {
+        console.log(`Skipping ${title} - body too short`);
         skippedCount++;
         continue;
       }
@@ -94,11 +107,13 @@ export async function GET() {
         .limit(1);
 
       if (existing && existing.length > 0) {
+        console.log(`Skipping ${title} - already exists`);
         skippedCount++;
         continue;
       }
 
       // 🤖 Analyze with AI
+      console.log(`Analyzing: ${title}`);
       const content = `${title}\n\n${body}`;
       const analyzed = await analyzeWithAI(content);
 
@@ -119,9 +134,12 @@ export async function GET() {
       if (error) {
         console.error("Insert error:", error);
       } else {
+        console.log(`Saved: ${title}`);
         newCount++;
       }
     }
+
+    console.log(`Done. ${newCount} new, ${skippedCount} skipped.`);
 
     return NextResponse.json({
       message: `Done. ${newCount} new upgrades analyzed, ${skippedCount} skipped.`
