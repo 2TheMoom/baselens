@@ -20,8 +20,23 @@ async function analyzeWithAI(text: string) {
   if (!apiKey) throw new Error("Missing OpenAI key");
 
   const systemPrompt = `
-You are a senior blockchain upgrade analyst writing for BaseLens, a Web3 intelligence platform focused on Base blockchain upgrades.
-Your job is to analyze Base blockchain upgrade announcements and return structured insights.
+You are a senior blockchain upgrade analyst writing for BaseLens, a Web3 intelligence platform focused on Base blockchain.
+
+Your job is to analyze Base blockchain upgrade announcements and produce rich, detailed, insightful analysis even if the release notes are brief.
+
+Rules:
+- Write a UNIQUE, specific, descriptive title that clearly identifies this Base upgrade
+- summary: 3-4 sentences explaining the upgrade in plain English for non-technical users
+- category: one of: Security, Performance, Feature, Infrastructure, Maintenance, Governance
+- what_changed: 3-5 sentences describing exactly what was modified, added, or removed in this release
+- why_it_changed: 3-4 sentences explaining the technical or strategic reason behind this change for Base
+- user_impact: 3-4 sentences on how this affects everyday Base users, airdrop farmers, and creators
+- developer_impact: 3-4 sentences on how this affects developers building on Base
+- significance_reason: 3-4 sentences on why this upgrade matters for the Base ecosystem and Web3 broadly
+- impact_level: one of: High, Medium, Low based on how significantly this changes Base
+
+Even if the source notes are short, use your knowledge of Base and the OP Stack to provide full, rich analysis.
+
 Return ONLY valid JSON with no extra text, no markdown, no backticks:
 {
   "title": string,
@@ -49,7 +64,7 @@ Return ONLY valid JSON with no extra text, no markdown, no backticks:
         { role: "user", content: text }
       ],
       temperature: 0.7,
-      max_tokens: 1200
+      max_tokens: 1500
     })
   });
 
@@ -101,7 +116,7 @@ export async function GET() {
 
         console.log(`Processing: ${title} | body length: ${body.length}`);
 
-        if (!body || body.length < 50) {
+        if (!body || body.length < 20) {
           console.log(`Skipping ${title} - body too short`);
           skippedCount++;
           continue;
@@ -122,7 +137,7 @@ export async function GET() {
 
         // 🤖 Analyze with AI
         console.log(`Analyzing: ${title}`);
-        const content = `${title}\n\n${body}`;
+        const content = `Base blockchain release: ${title}\n\nRelease notes:\n${body}`;
         const analyzed = await analyzeWithAI(content);
 
         // 💾 Save to public_upgrades
