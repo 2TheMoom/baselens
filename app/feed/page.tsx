@@ -63,33 +63,30 @@ export default function FeedPage() {
   }
 
   return (
-    <main style={{ background: "#EDEAE4", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <main style={{ background: "#E9E6DF", minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "var(--font-heading)" }}>
 
+      {/* HEADER */}
       <header style={{
-        borderBottom: "1px solid #D8D4CC",
+        borderBottom: "1px solid #D4D0C8",
         padding: "16px 32px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "#EDEAE4"
+        background: "#E9E6DF"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 28,
-            height: 28,
-            borderRadius: 8,
-            background: "#2563EB",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
+            width: 28, height: 28, borderRadius: 8,
+            background: "#1F3A8F",
+            display: "flex", alignItems: "center", justifyContent: "center"
           }}>
             <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>B</span>
           </div>
-          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.3px" }}>BaseLens</span>
+          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>BaseLens</span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Link href="/" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
+          <Link href="/dashboard" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
             My Dashboard
           </Link>
           <button
@@ -99,11 +96,12 @@ export default function FeedPage() {
               padding: "6px 14px",
               borderRadius: 8,
               border: "none",
-              background: refreshing ? "#9CA3AF" : "#2563EB",
+              background: refreshing ? "#9CA3AF" : "#1F3A8F",
               color: "#fff",
               fontSize: 13,
-              fontWeight: 600,
-              cursor: refreshing ? "not-allowed" : "pointer"
+              fontWeight: 700,
+              cursor: refreshing ? "not-allowed" : "pointer",
+              fontFamily: "var(--font-heading)"
             }}
           >
             {refreshing ? "Fetching..." : "Fetch Latest"}
@@ -111,30 +109,33 @@ export default function FeedPage() {
         </div>
       </header>
 
+      {/* HERO */}
       <section style={{ textAlign: "center", padding: "40px 32px 24px" }}>
         <div style={{
           display: "inline-block",
-          background: "#E8F0FE",
-          color: "#2563EB",
+          background: "#1F3A8F18",
+          color: "#1F3A8F",
           fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: "0.1em",
+          fontWeight: 700,
+          letterSpacing: "0.12em",
           textTransform: "uppercase",
           padding: "4px 12px",
           borderRadius: 20,
-          marginBottom: 16
+          marginBottom: 16,
+          fontFamily: "var(--font-mono)"
         }}>
           Auto-Updated. AI-Analyzed. Public
         </div>
 
         <h1 style={{
-          fontSize: 32,
+          fontSize: 36,
           fontWeight: 800,
-          letterSpacing: "-0.8px",
+          letterSpacing: "-0.5px",
           lineHeight: 1.2,
-          color: "#0F1117",
+          color: "#161719",
           maxWidth: 500,
-          margin: "0 auto 12px"
+          margin: "0 auto 12px",
+          fontFamily: "var(--font-heading)"
         }}>
           Base Upgrade Feed
         </h1>
@@ -154,17 +155,19 @@ export default function FeedPage() {
           <p style={{
             marginTop: 16,
             fontSize: 13,
-            color: message.includes("error") || message.includes("Failed") ? "#D64545" : "#16A34A",
-            fontWeight: 500
+            color: message.includes("error") || message.includes("Failed") ? "#B01C2E" : "#1A6B3C",
+            fontWeight: 600,
+            fontFamily: "var(--font-mono)"
           }}>
             {message}
           </p>
         )}
       </section>
 
+      {/* FEED */}
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px 40px", width: "100%" }}>
         {loading ? (
-          <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginTop: 40 }}>
+          <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
             Loading upgrades...
           </p>
         ) : upgrades.length === 0 ? (
@@ -179,11 +182,12 @@ export default function FeedPage() {
                 padding: "12px 24px",
                 borderRadius: 12,
                 border: "none",
-                background: "#2563EB",
+                background: "#1F3A8F",
                 color: "#fff",
                 fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer"
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "var(--font-heading)"
               }}
             >
               {refreshing ? "Fetching..." : "Fetch Now"}
@@ -199,7 +203,7 @@ export default function FeedPage() {
                     href={upgrade.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontSize: 12, color: "#2563EB", textDecoration: "none" }}
+                    style={{ fontSize: 12, color: "#1F3A8F", textDecoration: "none", fontFamily: "var(--font-mono)" }}
                   >
                     View original release
                   </a>
@@ -210,9 +214,10 @@ export default function FeedPage() {
         )}
       </div>
 
+      {/* FOOTER */}
       <footer style={{
         marginTop: "auto",
-        borderTop: "1px solid #D8D4CC",
+        borderTop: "1px solid #D4D0C8",
         padding: "20px 32px",
         display: "flex",
         alignItems: "center",
@@ -222,21 +227,13 @@ export default function FeedPage() {
         color: "#6B7280"
       }}>
         <span>Built by</span>
-        <a
-          href="https://x.com/olumi441"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#2563EB", fontWeight: 600, textDecoration: "none" }}
-        >
+        <a href="https://x.com/olumi441" target="_blank" rel="noopener noreferrer"
+          style={{ color: "#1F3A8F", fontWeight: 700, textDecoration: "none" }}>
           Abu Olumi
         </a>
         <span>·</span>
-        <a
-          href="https://github.com/2TheMoom/baselens"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#6B7280", textDecoration: "none", fontWeight: 500 }}
-        >
+        <a href="https://github.com/2TheMoom/baselens" target="_blank" rel="noopener noreferrer"
+          style={{ color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
           GitHub
         </a>
       </footer>

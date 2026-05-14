@@ -28,7 +28,7 @@ export default function LoginPage() {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setMessage(error.message);
-      else window.location.href = "/";
+      else window.location.href = "/dashboard";
     }
     setLoading(false);
   }
@@ -51,35 +51,36 @@ export default function LoginPage() {
 
   return (
     <main style={{
-      background: "#EDEAE4",
+      background: "#E9E6DF",
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: 20
+      padding: 20,
+      fontFamily: "var(--font-heading)"
     }}>
       <div style={{
-        background: "#F5F2EC",
-        border: "1px solid #D8D4CC",
+        background: "#F0EDE7",
+        border: "1px solid #D4D0C8",
         borderRadius: 20,
         padding: "40px 36px",
         width: "100%",
         maxWidth: 400,
-        boxShadow: "0 4px 24px rgba(0,0,0,0.06)"
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)"
       }}>
         {/* LOGO */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
-            background: "#2563EB",
+            background: "#1F3A8F",
             display: "flex", alignItems: "center", justifyContent: "center"
           }}>
             <span style={{ color: "#fff", fontSize: 16, fontWeight: 700 }}>B</span>
           </div>
-          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: "-0.3px" }}>BaseLens</span>
+          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: "-0.3px", color: "#161719" }}>BaseLens</span>
         </div>
 
-        <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.5px" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.5px", color: "#161719" }}>
           {isSignUp ? "Create account" : "Welcome back"}
         </h1>
         <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 24 }}>
@@ -99,9 +100,9 @@ export default function LoginPage() {
 
         {/* DIVIDER */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
-          <div style={{ flex: 1, height: 1, background: "#D8D4CC" }} />
-          <span style={{ fontSize: 12, color: "#6B7280" }}>or</span>
-          <div style={{ flex: 1, height: 1, background: "#D8D4CC" }} />
+          <div style={{ flex: 1, height: 1, background: "#D4D0C8" }} />
+          <span style={{ fontSize: 12, color: "#6B7280", fontFamily: "var(--font-mono)" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: "#D4D0C8" }} />
         </div>
 
         {/* EMAIL INPUT */}
@@ -125,8 +126,9 @@ export default function LoginPage() {
         {message && (
           <p style={{
             fontSize: 13,
-            color: message.includes("Check") ? "#16A34A" : "#D64545",
-            marginTop: 10
+            color: message.includes("Check") ? "#1A6B3C" : "#B01C2E",
+            marginTop: 10,
+            fontFamily: "var(--font-mono)"
           }}>
             {message}
           </p>
@@ -142,11 +144,13 @@ export default function LoginPage() {
             padding: "13px 20px",
             borderRadius: 12,
             border: "none",
-            background: !email || !password || loading ? "#9CA3AF" : "#2563EB",
+            background: !email || !password || loading ? "#9CA3AF" : "#1F3A8F",
             color: "#fff",
             fontSize: 15,
-            fontWeight: 600,
-            cursor: !email || !password || loading ? "not-allowed" : "pointer"
+            fontWeight: 700,
+            cursor: !email || !password || loading ? "not-allowed" : "pointer",
+            fontFamily: "var(--font-heading)",
+            letterSpacing: "0.02em"
           }}
         >
           {loading ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}
@@ -158,7 +162,7 @@ export default function LoginPage() {
           {" "}
           <button
             onClick={() => { setIsSignUp(!isSignUp); setMessage(""); }}
-            style={{ background: "none", border: "none", color: "#2563EB", fontWeight: 600, cursor: "pointer", fontSize: 13 }}
+            style={{ background: "none", border: "none", color: "#1F3A8F", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
@@ -172,8 +176,8 @@ const socialBtn: React.CSSProperties = {
   width: "100%",
   padding: "12px 16px",
   borderRadius: 12,
-  border: "1.5px solid #D8D4CC",
-  background: "#FAFAF8",
+  border: "1.5px solid #D4D0C8",
+  background: "#E9E6DF",
   fontSize: 14,
   fontWeight: 500,
   cursor: "pointer",
@@ -181,17 +185,18 @@ const socialBtn: React.CSSProperties = {
   alignItems: "center",
   gap: 10,
   marginBottom: 10,
-  color: "#0F1117"
+  color: "#161719",
+  fontFamily: "var(--font-heading)"
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px 14px",
   borderRadius: 12,
-  border: "1.5px solid #D8D4CC",
-  background: "#FAFAF8",
+  border: "1.5px solid #D4D0C8",
+  background: "#E9E6DF",
   fontSize: 14,
-  color: "#0F1117",
+  color: "#161719",
   outline: "none",
-  fontFamily: "inherit"
+  fontFamily: "var(--font-heading)"
 };
