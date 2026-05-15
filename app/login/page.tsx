@@ -41,14 +41,6 @@ export default function LoginPage() {
     if (error) setMessage(error.message);
   }
 
-  async function handleTwitter() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "twitter",
-      options: { redirectTo: `${window.location.origin}/auth/callback` }
-    });
-    if (error) setMessage(error.message);
-  }
-
   return (
     <main style={{
       background: "#E9E6DF",
@@ -87,15 +79,10 @@ export default function LoginPage() {
           {isSignUp ? "Sign up to start analyzing Base upgrades" : "Sign in to your BaseLens account"}
         </p>
 
-        {/* SOCIAL BUTTONS */}
+        {/* GOOGLE BUTTON */}
         <button onClick={handleGoogle} style={socialBtn}>
           <span style={{ fontSize: 16 }}>G</span>
           Continue with Google
-        </button>
-
-        <button onClick={handleTwitter} style={socialBtn}>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>X</span>
-          Continue with X (Twitter)
         </button>
 
         {/* DIVIDER */}
