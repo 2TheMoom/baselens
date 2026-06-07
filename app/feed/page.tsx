@@ -75,14 +75,17 @@ export default function FeedPage() {
         background: "#E9E6DF"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: "#1F3A8F",
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}>
-            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>B</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>BaseLens</span>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
+            <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
+            <circle cx="14" cy="14" r="3" fill="#1F3A8F"/>
+            <line x1="3" y1="14" x2="25" y2="14" stroke="#1A6B3C" strokeWidth="1.2" strokeDasharray="3 2"/>
+            <line x1="22" y1="22" x2="29" y2="29" stroke="#1F3A8F" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="29" cy="29" r="2" fill="#1A6B3C"/>
+          </svg>
+          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>
+            Base<span style={{ color: "#1F3A8F" }}>Lens</span>
+          </span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

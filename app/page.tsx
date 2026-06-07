@@ -16,14 +16,17 @@ export default function LandingPage() {
         background: "#E9E6DF"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: "#1F3A8F",
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}>
-            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>B</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>BaseLens</span>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
+            <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
+            <circle cx="14" cy="14" r="3" fill="#1F3A8F"/>
+            <line x1="3" y1="14" x2="25" y2="14" stroke="#1A6B3C" strokeWidth="1.2" strokeDasharray="3 2"/>
+            <line x1="22" y1="22" x2="29" y2="29" stroke="#1F3A8F" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="29" cy="29" r="2" fill="#1A6B3C"/>
+          </svg>
+          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>
+            Base<span style={{ color: "#1F3A8F" }}>Lens</span>
+          </span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -117,7 +120,6 @@ export default function LandingPage() {
       {/* FEATURES */}
       <section style={{ maxWidth: 900, margin: "0 auto", padding: "0 32px 80px", width: "100%" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
-
           {[
             {
               icon: "🤖",
@@ -170,21 +172,11 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section style={{
-        background: "#1F3A8F",
-        padding: "60px 32px",
-        textAlign: "center"
-      }}>
-        <h2 style={{
-          fontSize: 36,
-          fontWeight: 800,
-          color: "#fff",
-          marginBottom: 12,
-          letterSpacing: "-0.5px"
-        }}>
+      <section style={{ background: "#1F3A8F", padding: "60px 32px", textAlign: "center" }}>
+        <h2 style={{ fontSize: 36, fontWeight: 800, color: "#fff", marginBottom: 12, letterSpacing: "-0.5px" }}>
           Stay ahead of every Base upgrade
         </h2>
-        <p style={{ color: "#ffffff99", fontSize: 15, marginBottom: 32, maxWidth: 400, margin: "0 auto 32px" }}>
+        <p style={{ color: "#ffffff99", fontSize: 15, maxWidth: 400, margin: "0 auto 32px" }}>
           Join BaseLens and never miss what matters on Base again.
         </p>
         <Link href="/login" style={{
