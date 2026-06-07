@@ -49,7 +49,6 @@ export default function FeedPage() {
   async function triggerFetch() {
     setRefreshing(true);
     setMessage("");
-
     try {
       const res = await fetch("/api/auto-fetch");
       const data = await res.json();
@@ -74,7 +73,7 @@ export default function FeedPage() {
         justifyContent: "space-between",
         background: "#E9E6DF"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
             <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
@@ -86,7 +85,7 @@ export default function FeedPage() {
           <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>
             Base<span style={{ color: "#1F3A8F" }}>Lens</span>
           </span>
-        </div>
+        </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Link href="/dashboard" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>

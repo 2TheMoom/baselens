@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "../../lib/lsupabase";
 
 export default function LoginPage() {
@@ -60,8 +61,9 @@ export default function LoginPage() {
         maxWidth: 400,
         boxShadow: "0 4px 24px rgba(0,0,0,0.08)"
       }}>
+
         {/* LOGO */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, textDecoration: "none" }}>
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
             <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
@@ -73,7 +75,7 @@ export default function LoginPage() {
           <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.3px", color: "#161719" }}>
             Base<span style={{ color: "#1F3A8F" }}>Lens</span>
           </span>
-        </div>
+        </Link>
 
         <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.5px", color: "#161719" }}>
           {isSignUp ? "Create account" : "Welcome back"}
@@ -157,6 +159,7 @@ export default function LoginPage() {
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>
+
       </div>
     </main>
   );
