@@ -23,11 +23,14 @@ type PublicUpgrade = {
   _key?: number;
 };
 
+type FilterLevel = "All" | "High" | "Medium" | "Low";
+
 export default function FeedPage() {
   const [upgrades, setUpgrades] = useState<PublicUpgrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState("");
+  const [filter, setFilter] = useState<FilterLevel>("All");
 
   async function loadUpgrades() {
     const { data, error } = await supabase
@@ -60,6 +63,14 @@ export default function FeedPage() {
       setRefreshing(false);
     }
   }
+
+  const filteredUpgrades = filter === "All"
+    ? upgrades
+    : upgrades.filter((u) => u.impact_level === filter);
+
+  const highCount = upgrades.filter((u) => u.impact_level === "High").length;
+  const mediumCount = upgrades.filter((u) => u.impact_level === "Medium").length;
+  const lowCount = upgrades.filter((u) => u.impact_level === "Low").length;
 
   return (
     <main style={{ background: "#E9E6DF", minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "var(--font-heading)" }}>
@@ -166,6 +177,83 @@ export default function FeedPage() {
         )}
       </section>
 
+      {/* STATS + FILTERS */}
+      {!loading && upgrades.length > 0 && (
+        <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px 20px", width: "100%" }}>
+
+          {/* STATS ROW */}
+          <div style={{
+            display: "flex",
+            gap: 12,
+            marginBottom: 20,
+            flexWrap: "wrap"
+          }}>
+            {[
+              { label: "Total Tracked", value: upgrades.length, color: "#1F3A8F" },
+              { label: "High Impact", value: highCount, color: "#B01C2E" },
+              { label: "Medium Impact", value: mediumCount, color: "#B78103" },
+              { label: "Low Impact", value: lowCount, color: "#1A6B3C" },
+            ].map((stat, i) => (
+              <div key={i} style={{
+                background: "#F0EDE7",
+                border: "1px solid #D4D0C8",
+                borderRadius: 10,
+                padding: "10px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                flex: 1,
+                minWidth: 100
+              }}>
+                <span style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: stat.color,
+                  fontFamily: "var(--font-mono)"
+                }}>
+                  {stat.value}
+                </span>
+                <span style={{
+                  fontSize: 10,
+                  color: "#6B7280",
+                  fontWeight: 600,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--font-mono)"
+                }}>
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* FILTER BUTTONS */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {(["All", "High", "Medium", "Low"] as FilterLevel[]).map((level) => (
+              <button
+                key={level}
+                onClick={() => setFilter(level)}
+                style={{
+                  padding: "6px 16px",
+                  borderRadius: 20,
+                  border: "1.5px solid",
+                  borderColor: filter === level ? filterColor(level) : "#D4D0C8",
+                  background: filter === level ? filterBg(level) : "transparent",
+                  color: filter === level ? filterColor(level) : "#6B7280",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-mono)",
+                  letterSpacing: "0.06em"
+                }}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* FEED */}
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px 40px", width: "100%" }}>
         {loading ? (
@@ -195,8 +283,12 @@ export default function FeedPage() {
               {refreshing ? "Fetching..." : "Fetch Now"}
             </button>
           </div>
+        ) : filteredUpgrades.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
+            No {filter} impact upgrades found.
+          </p>
         ) : (
-          upgrades.map((upgrade) => (
+          filteredUpgrades.map((upgrade) => (
             <div key={upgrade.id}>
               <UpgradeCard data={upgrade} isNew={false} />
               {upgrade.source_url && (
@@ -242,4 +334,18 @@ export default function FeedPage() {
 
     </main>
   );
+}
+
+function filterColor(level: FilterLevel): string {
+  if (level === "High") return "#B01C2E";
+  if (level === "Medium") return "#B78103";
+  if (level === "Low") return "#1A6B3C";
+  return "#1F3A8F";
+}
+
+function filterBg(level: FilterLevel): string {
+  if (level === "High") return "#B01C2E18";
+  if (level === "Medium") return "#FFF6E5";
+  if (level === "Low") return "#1A6B3C18";
+  return "#1F3A8F18";
 }
