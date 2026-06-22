@@ -31,6 +31,7 @@ export default function FeedPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState("");
   const [filter, setFilter] = useState<FilterLevel>("All");
+  const [search, setSearch] = useState("");
 
   async function loadUpgrades() {
     const { data, error } = await supabase
@@ -64,9 +65,19 @@ export default function FeedPage() {
     }
   }
 
-  const filteredUpgrades = filter === "All"
-    ? upgrades
-    : upgrades.filter((u) => u.impact_level === filter);
+  const filteredUpgrades = upgrades
+    .filter((u) => filter === "All" || u.impact_level === filter)
+    .filter((u) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        u.title?.toLowerCase().includes(q) ||
+        u.summary?.toLowerCase().includes(q) ||
+        u.category?.toLowerCase().includes(q) ||
+        u.what_changed?.toLowerCase().includes(q) ||
+        u.why_it_changed?.toLowerCase().includes(q)
+      );
+    });
 
   const highCount = upgrades.filter((u) => u.impact_level === "High").length;
   const mediumCount = upgrades.filter((u) => u.impact_level === "Medium").length;
@@ -177,17 +188,12 @@ export default function FeedPage() {
         )}
       </section>
 
-      {/* STATS + FILTERS */}
+      {/* STATS + FILTERS + SEARCH */}
       {!loading && upgrades.length > 0 && (
         <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px 20px", width: "100%" }}>
 
           {/* STATS ROW */}
-          <div style={{
-            display: "flex",
-            gap: 12,
-            marginBottom: 20,
-            flexWrap: "wrap"
-          }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
             {[
               { label: "Total Tracked", value: upgrades.length, color: "#1F3A8F" },
               { label: "High Impact", value: highCount, color: "#B01C2E" },
@@ -227,6 +233,58 @@ export default function FeedPage() {
             ))}
           </div>
 
+          {/* SEARCH BAR */}
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <span style={{
+              position: "absolute",
+              left: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#6B7280",
+              fontSize: 14,
+              pointerEvents: "none"
+            }}>
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Search upgrades by keyword..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 14px 10px 38px",
+                borderRadius: 10,
+                border: "1.5px solid #D4D0C8",
+                background: "#F0EDE7",
+                fontSize: 13,
+                color: "#161719",
+                outline: "none",
+                fontFamily: "var(--font-heading)",
+                boxSizing: "border-box"
+              }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "#6B7280",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 700
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
           {/* FILTER BUTTONS */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {(["All", "High", "Medium", "Low"] as FilterLevel[]).map((level) => (
@@ -250,6 +308,16 @@ export default function FeedPage() {
                 {level}
               </button>
             ))}
+            {search && (
+              <span style={{
+                fontSize: 12,
+                color: "#6B7280",
+                fontFamily: "var(--font-mono)",
+                paddingTop: 7
+              }}>
+                {filteredUpgrades.length} result{filteredUpgrades.length !== 1 ? "s" : ""} for &quot;{search}&quot;
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -285,7 +353,7 @@ export default function FeedPage() {
           </div>
         ) : filteredUpgrades.length === 0 ? (
           <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
-            No {filter} impact upgrades found.
+            No results found. Try a different keyword or filter.
           </p>
         ) : (
           filteredUpgrades.map((upgrade) => (
