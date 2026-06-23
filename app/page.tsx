@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function LandingPage() {
+  const [showBack, setShowBack] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      setShowBack(window.scrollY > 300);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <main style={{ background: "#E9E6DF", minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "var(--font-heading)" }}>
 
@@ -36,7 +47,7 @@ export default function LandingPage() {
           <Link href="/login" style={{
             fontSize: 13,
             color: "#fff",
-            background: "#1F3A8F",
+            background: "linear-gradient(90deg, #1F3A8F, #0052FF)",
             padding: "7px 16px",
             borderRadius: 8,
             textDecoration: "none",
@@ -51,8 +62,8 @@ export default function LandingPage() {
       <section style={{ textAlign: "center", padding: "80px 32px 60px", flex: 1 }}>
         <div style={{
           display: "inline-block",
-          background: "#1F3A8F18",
-          color: "#1F3A8F",
+          background: "linear-gradient(90deg, #1F3A8F18, #0052FF12)",
+          color: "#2848B0",
           fontSize: 11,
           fontWeight: 700,
           letterSpacing: "0.12em",
@@ -76,7 +87,13 @@ export default function LandingPage() {
           fontFamily: "var(--font-heading)"
         }}>
           Understand Every<br />
-          <span style={{ color: "#1F3A8F" }}>Base Upgrade</span> Clearly
+          <span style={{
+            background: "linear-gradient(90deg, #1F3A8F, #0052FF)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent"
+          }}>
+            Base Upgrade
+          </span> Clearly
         </h1>
 
         <p style={{
@@ -93,7 +110,7 @@ export default function LandingPage() {
           <Link href="/login" style={{
             padding: "14px 28px",
             borderRadius: 12,
-            background: "#1F3A8F",
+            background: "linear-gradient(90deg, #1F3A8F, #0052FF)",
             color: "#fff",
             textDecoration: "none",
             fontSize: 15,
@@ -172,7 +189,11 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section style={{ background: "#1F3A8F", padding: "60px 32px", textAlign: "center" }}>
+      <section style={{
+        background: "linear-gradient(135deg, #1F3A8F, #0052FF)",
+        padding: "60px 32px",
+        textAlign: "center"
+      }}>
         <h2 style={{ fontSize: 36, fontWeight: 800, color: "#fff", marginBottom: 12, letterSpacing: "-0.5px" }}>
           Stay ahead of every Base upgrade
         </h2>
@@ -216,6 +237,33 @@ export default function LandingPage() {
           GitHub
         </a>
       </footer>
+
+      {/* BACK TO TOP BUTTON */}
+      {showBack && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          style={{
+            position: "fixed",
+            bottom: 28,
+            right: 28,
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #1F3A8F, #0052FF)",
+            border: "none",
+            color: "#fff",
+            fontSize: 18,
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(0,82,255,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50
+          }}
+        >
+          ↑
+        </button>
+      )}
 
     </main>
   );
