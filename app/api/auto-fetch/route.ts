@@ -6,16 +6,63 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Base-only GitHub sources — verified against the live API before adding.
-// base-org/base-node and base-org/block-explorer were removed: both 404
-// (repos don't exist), so every run silently wasted a request on them.
-const GITHUB_SOURCES = [
-  "https://api.github.com/repos/base-org/node/releases",
-  "https://api.github.com/repos/base-org/op-enclave/releases",
-  "https://api.github.com/repos/base-org/withdrawer/releases",
-  "https://api.github.com/repos/base-org/account-sdk/releases",
-  "https://api.github.com/repos/base-org/contracts/releases"
-];
+export const maxDuration = 60;
+
+const GITHUB_ORG = "base";
+// Hard stop so one run can't run long enough to hit the serverless timeout.
+const MAX_NEW_PER_RUN = 10;
+// Without a token we're capped at 60 GitHub API requests/hour, so keep the
+// scan small enough to fit that. With GITHUB_TOKEN set, scan the whole org.
+const REPO_SCAN_LIMIT = process.env.GITHUB_TOKEN ? 200 : 40;
+
+function githubHeaders() {
+  const headers: Record<string, string> = {
+    "User-Agent": "BaseLens-App",
+    Accept: "application/vnd.github.v3+json"
+  };
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+  return headers;
+}
+
+type GithubRepo = {
+  name: string;
+  fork: boolean;
+  archived: boolean;
+  pushed_at: string;
+};
+
+// Discovers active repos in the Base org instead of relying on a hardcoded
+// list — the hardcoded list is what silently went stale last time (two 404s,
+// one repo with zero releases ever). Sorted by most recently pushed so the
+// repos most likely to have a fresh release get checked first if the scan
+// limit is hit.
+async function fetchActiveRepos(): Promise<GithubRepo[]> {
+  const repos: GithubRepo[] = [];
+  let url: string | null = `https://api.github.com/orgs/${GITHUB_ORG}/repos?per_page=100&type=public`;
+
+  while (url) {
+    const res: Response = await fetch(url, { headers: githubHeaders() });
+    if (!res.ok) {
+      console.log(`Failed to list ${GITHUB_ORG} repos - status ${res.status}`);
+      break;
+    }
+
+    const page: GithubRepo[] = await res.json();
+    repos.push(...page);
+
+    const link = res.headers.get("link");
+    const next = link?.split(",").find((part) => part.includes('rel="next"'));
+    const match = next?.match(/<([^>]+)>/);
+    url = match ? match[1] : null;
+  }
+
+  return repos
+    .filter((repo) => !repo.fork && !repo.archived)
+    .sort((a, b) => new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime())
+    .slice(0, REPO_SCAN_LIMIT);
+}
 
 async function analyzeWithAI(text: string) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -80,51 +127,45 @@ Return ONLY valid JSON with no extra text, no markdown, no backticks:
 
 export async function GET() {
   try {
-    console.log("Auto-fetch started — Base-only sources...");
+    console.log("Auto-fetch started — discovering active Base repos...");
+
+    const repos = await fetchActiveRepos();
+    console.log(`Scanning ${repos.length} active (non-fork, non-archived) repos in ${GITHUB_ORG} org`);
 
     let newCount = 0;
     let skippedCount = 0;
 
-    for (const sourceUrl of GITHUB_SOURCES) {
-      console.log(`Fetching from: ${sourceUrl}`);
+    for (const repo of repos) {
+      if (newCount >= MAX_NEW_PER_RUN) {
+        console.log(`Reached ${MAX_NEW_PER_RUN} new upgrades this run — stopping early, rest picked up next run`);
+        break;
+      }
 
-      const res = await fetch(sourceUrl, {
-        headers: {
-          "User-Agent": "BaseLens-App",
-          Accept: "application/vnd.github.v3+json"
-        }
-      });
-
-      console.log(`Status for ${sourceUrl}: ${res.status}`);
+      const releasesUrl = `https://api.github.com/repos/${GITHUB_ORG}/${repo.name}/releases?per_page=3`;
+      const res = await fetch(releasesUrl, { headers: githubHeaders() });
 
       if (!res.ok) {
-        console.log(`Skipping source - status ${res.status}`);
         continue;
       }
 
       const releases = await res.json();
-
-      if (!releases || releases.length === 0) {
-        console.log(`No releases found for ${sourceUrl}`);
+      if (!Array.isArray(releases) || releases.length === 0) {
         continue;
       }
 
-      console.log(`Found ${releases.length} releases`);
+      for (const release of releases) {
+        if (newCount >= MAX_NEW_PER_RUN) break;
 
-      for (const release of releases.slice(0, 3)) {
         const title = release.name || release.tag_name;
         const body = release.body || "";
         const releaseUrl = release.html_url;
 
-        console.log(`Processing: ${title} | body length: ${body.length}`);
-
         if (!body || body.length < 20) {
-          console.log(`Skipping ${title} - body too short`);
           skippedCount++;
           continue;
         }
 
-        // 🛡️ Check if already analyzed
+        // Check if already analyzed
         const { data: existing } = await supabase
           .from("public_upgrades")
           .select("id")
@@ -132,17 +173,16 @@ export async function GET() {
           .limit(1);
 
         if (existing && existing.length > 0) {
-          console.log(`Skipping ${title} - already exists`);
           skippedCount++;
           continue;
         }
 
-        // 🤖 Analyze with AI
-        console.log(`Analyzing: ${title}`);
-        const content = `Base blockchain release: ${title}\n\nRelease notes:\n${body}`;
+        // Analyze with AI
+        console.log(`Analyzing: ${repo.name} — ${title}`);
+        const content = `Base blockchain release (${repo.name}): ${title}\n\nRelease notes:\n${body}`;
         const analyzed = await analyzeWithAI(content);
 
-        // 💾 Save to public_upgrades
+        // Save to public_upgrades
         const { error } = await supabase.from("public_upgrades").insert([{
           title: analyzed.title,
           summary: analyzed.summary,
@@ -159,16 +199,15 @@ export async function GET() {
         if (error) {
           console.error("Insert error:", error);
         } else {
-          console.log(`Saved: ${title}`);
           newCount++;
         }
       }
     }
 
-    console.log(`Done. ${newCount} new, ${skippedCount} skipped.`);
+    console.log(`Done. ${newCount} new, ${skippedCount} skipped, ${repos.length} repos scanned.`);
 
     return NextResponse.json({
-      message: `Done. ${newCount} new upgrades analyzed, ${skippedCount} skipped.`
+      message: `Done. ${newCount} new upgrades analyzed, ${skippedCount} skipped, ${repos.length} repos scanned.`
     });
 
   } catch (err: unknown) {
