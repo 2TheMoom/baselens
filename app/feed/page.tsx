@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/lsupabase";
 import UpgradeCard from "../components/UpgradeCard";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const supabase = createClient();
+
+const PAGE_SIZE = 6;
 
 type PublicUpgrade = {
   id: string;
@@ -32,6 +36,7 @@ export default function FeedPage() {
   const [message, setMessage] = useState("");
   const [filter, setFilter] = useState<FilterLevel>("All");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   async function loadUpgrades() {
     const { data, error } = await supabase
@@ -50,6 +55,16 @@ export default function FeedPage() {
     init();
   }, []);
 
+  function updateFilter(level: FilterLevel) {
+    setFilter(level);
+    setPage(1);
+  }
+
+  function updateSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
   async function triggerFetch() {
     setRefreshing(true);
     setMessage("");
@@ -65,121 +80,110 @@ export default function FeedPage() {
     }
   }
 
-  const filteredUpgrades = upgrades
-    .filter((u) => filter === "All" || u.impact_level === filter)
-    .filter((u) => {
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
-      return (
-        u.title?.toLowerCase().includes(q) ||
-        u.summary?.toLowerCase().includes(q) ||
-        u.category?.toLowerCase().includes(q) ||
-        u.what_changed?.toLowerCase().includes(q) ||
-        u.why_it_changed?.toLowerCase().includes(q)
-      );
-    });
+  const filteredUpgrades = useMemo(() => {
+    return upgrades
+      .filter((u) => filter === "All" || u.impact_level === filter)
+      .filter((u) => {
+        if (!search.trim()) return true;
+        const q = search.toLowerCase();
+        return (
+          u.title?.toLowerCase().includes(q) ||
+          u.summary?.toLowerCase().includes(q) ||
+          u.category?.toLowerCase().includes(q) ||
+          u.what_changed?.toLowerCase().includes(q) ||
+          u.why_it_changed?.toLowerCase().includes(q)
+        );
+      });
+  }, [upgrades, filter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUpgrades.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedUpgrades = filteredUpgrades.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   const highCount = upgrades.filter((u) => u.impact_level === "High").length;
   const mediumCount = upgrades.filter((u) => u.impact_level === "Medium").length;
   const lowCount = upgrades.filter((u) => u.impact_level === "Low").length;
 
   return (
-    <main style={{ background: "#E9E6DF", minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "var(--font-heading)" }}>
+    <main style={{ background: "var(--background)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
 
-      {/* HEADER */}
-      <header style={{
-        borderBottom: "1px solid #D4D0C8",
-        padding: "16px 32px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        background: "#E9E6DF"
-      }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
-            <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
-            <circle cx="14" cy="14" r="3" fill="#1F3A8F"/>
-            <line x1="3" y1="14" x2="25" y2="14" stroke="#1A6B3C" strokeWidth="1.2" strokeDasharray="3 2"/>
-            <line x1="22" y1="22" x2="29" y2="29" stroke="#1F3A8F" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="29" cy="29" r="2" fill="#1A6B3C"/>
-          </svg>
-          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>
-            Base<span style={{ color: "#1F3A8F" }}>Lens</span>
-          </span>
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Link href="/dashboard" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
-            My Dashboard
-          </Link>
-          <button
-            onClick={triggerFetch}
-            disabled={refreshing}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 8,
-              border: "none",
-              background: refreshing ? "#9CA3AF" : "#1F3A8F",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: refreshing ? "not-allowed" : "pointer",
-              fontFamily: "var(--font-heading)"
-            }}
-          >
-            {refreshing ? "Fetching..." : "Fetch Latest"}
-          </button>
-        </div>
-      </header>
+      <Header
+        right={
+          <>
+            <Link href="/dashboard" style={{ fontSize: 13.5, color: "var(--muted)", textDecoration: "none", fontWeight: 500 }}>
+              My Dashboard
+            </Link>
+            <button
+              onClick={triggerFetch}
+              disabled={refreshing}
+              style={{
+                padding: "7px 16px",
+                borderRadius: "var(--radius-sm)",
+                border: "none",
+                background: refreshing ? "#9CA3AF" : "var(--accent)",
+                color: "#fff",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: refreshing ? "not-allowed" : "pointer",
+                fontFamily: "var(--font-display)"
+              }}
+            >
+              {refreshing ? "Fetching..." : "Fetch Latest"}
+            </button>
+          </>
+        }
+      />
 
       {/* HERO */}
-      <section style={{ textAlign: "center", padding: "40px 32px 24px" }}>
+      <section style={{ textAlign: "center", padding: "48px 32px 28px" }}>
         <div style={{
           display: "inline-block",
-          background: "#1F3A8F18",
-          color: "#1F3A8F",
+          background: "var(--accent-soft)",
+          color: "var(--accent)",
           fontSize: 11,
           fontWeight: 700,
-          letterSpacing: "0.12em",
+          letterSpacing: "0.14em",
           textTransform: "uppercase",
-          padding: "4px 12px",
-          borderRadius: 20,
-          marginBottom: 16,
+          padding: "5px 14px",
+          borderRadius: "var(--radius-full)",
+          marginBottom: 18,
           fontFamily: "var(--font-mono)"
         }}>
-          Auto-Updated. AI-Analyzed. Public
+          Auto-Updated · AI-Analyzed · Public
         </div>
 
         <h1 style={{
-          fontSize: 36,
+          fontSize: 38,
           fontWeight: 800,
-          letterSpacing: "-0.5px",
+          letterSpacing: "-0.6px",
           lineHeight: 1.2,
-          color: "#161719",
-          maxWidth: 500,
+          color: "var(--foreground)",
+          maxWidth: 520,
           margin: "0 auto 12px",
-          fontFamily: "var(--font-heading)"
+          fontFamily: "var(--font-display)"
         }}>
           Base Upgrade Feed
         </h1>
 
         <p style={{
-          color: "#6B7280",
+          color: "var(--muted)",
           maxWidth: 420,
           margin: "0 auto",
           fontSize: 14,
-          lineHeight: 1.6
+          lineHeight: 1.6,
+          fontFamily: "var(--font-body)"
         }}>
-          Automatically fetched and analyzed Base upgrades.
-          Updated every 6 hours. No login required.
+          Automatically fetched and analyzed Base upgrades. No login required.
         </p>
 
         {message && (
           <p style={{
-            marginTop: 16,
+            marginTop: 18,
             fontSize: 13,
-            color: message.includes("error") || message.includes("Failed") ? "#B01C2E" : "#1A6B3C",
+            color: message.toLowerCase().includes("error") || message.toLowerCase().includes("failed") ? "var(--crimson)" : "var(--green)",
             fontWeight: 600,
             fontFamily: "var(--font-mono)"
           }}>
@@ -190,29 +194,30 @@ export default function FeedPage() {
 
       {/* STATS + FILTERS + SEARCH */}
       {!loading && upgrades.length > 0 && (
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px 20px", width: "100%" }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 20px", width: "100%" }}>
 
           {/* STATS ROW */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 22, flexWrap: "wrap" }}>
             {[
-              { label: "Total Tracked", value: upgrades.length, color: "#1F3A8F" },
-              { label: "High Impact", value: highCount, color: "#B01C2E" },
-              { label: "Medium Impact", value: mediumCount, color: "#B78103" },
-              { label: "Low Impact", value: lowCount, color: "#1A6B3C" },
+              { label: "Total Tracked", value: upgrades.length, color: "var(--accent)" },
+              { label: "High Impact", value: highCount, color: "var(--crimson)" },
+              { label: "Medium Impact", value: mediumCount, color: "var(--amber)" },
+              { label: "Low Impact", value: lowCount, color: "var(--green)" },
             ].map((stat, i) => (
               <div key={i} style={{
-                background: "#F0EDE7",
-                border: "1px solid #D4D0C8",
-                borderRadius: 10,
-                padding: "10px 16px",
+                background: "var(--card-elevated)",
+                border: "1px solid var(--border-soft)",
+                borderRadius: "var(--radius-md)",
+                padding: "12px 18px",
                 display: "flex",
                 flexDirection: "column",
-                gap: 2,
+                gap: 3,
                 flex: 1,
-                minWidth: 100
+                minWidth: 110,
+                boxShadow: "var(--shadow-sm)"
               }}>
                 <span style={{
-                  fontSize: 22,
+                  fontSize: 23,
                   fontWeight: 800,
                   color: stat.color,
                   fontFamily: "var(--font-mono)"
@@ -221,7 +226,7 @@ export default function FeedPage() {
                 </span>
                 <span style={{
                   fontSize: 10,
-                  color: "#6B7280",
+                  color: "var(--muted)",
                   fontWeight: 600,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
@@ -240,33 +245,34 @@ export default function FeedPage() {
               left: 14,
               top: "50%",
               transform: "translateY(-50%)",
-              color: "#6B7280",
+              color: "var(--muted)",
               fontSize: 14,
               pointerEvents: "none"
             }}>
-              🔍
+              ⌕
             </span>
             <input
               type="text"
               placeholder="Search upgrades by keyword..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => updateSearch(e.target.value)}
               style={{
                 width: "100%",
-                padding: "10px 14px 10px 38px",
-                borderRadius: 10,
-                border: "1.5px solid #D4D0C8",
-                background: "#F0EDE7",
-                fontSize: 13,
-                color: "#161719",
+                padding: "11px 14px 11px 38px",
+                borderRadius: "var(--radius-md)",
+                border: "1.5px solid var(--border)",
+                background: "var(--card-elevated)",
+                fontSize: 13.5,
+                color: "var(--foreground)",
                 outline: "none",
-                fontFamily: "var(--font-heading)",
+                fontFamily: "var(--font-body)",
                 boxSizing: "border-box"
               }}
             />
             {search && (
               <button
-                onClick={() => setSearch("")}
+                onClick={() => updateSearch("")}
+                aria-label="Clear search"
                 style={{
                   position: "absolute",
                   right: 12,
@@ -274,7 +280,7 @@ export default function FeedPage() {
                   transform: "translateY(-50%)",
                   background: "none",
                   border: "none",
-                  color: "#6B7280",
+                  color: "var(--muted)",
                   cursor: "pointer",
                   fontSize: 14,
                   fontWeight: 700
@@ -286,18 +292,18 @@ export default function FeedPage() {
           </div>
 
           {/* FILTER BUTTONS */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             {(["All", "High", "Medium", "Low"] as FilterLevel[]).map((level) => (
               <button
                 key={level}
-                onClick={() => setFilter(level)}
+                onClick={() => updateFilter(level)}
                 style={{
                   padding: "6px 16px",
-                  borderRadius: 20,
+                  borderRadius: "var(--radius-full)",
                   border: "1.5px solid",
-                  borderColor: filter === level ? filterColor(level) : "#D4D0C8",
+                  borderColor: filter === level ? filterColor(level) : "var(--border)",
                   background: filter === level ? filterBg(level) : "transparent",
-                  color: filter === level ? filterColor(level) : "#6B7280",
+                  color: filter === level ? filterColor(level) : "var(--muted)",
                   fontSize: 12,
                   fontWeight: 700,
                   cursor: "pointer",
@@ -311,9 +317,8 @@ export default function FeedPage() {
             {search && (
               <span style={{
                 fontSize: 12,
-                color: "#6B7280",
-                fontFamily: "var(--font-mono)",
-                paddingTop: 7
+                color: "var(--muted)",
+                fontFamily: "var(--font-mono)"
               }}>
                 {filteredUpgrades.length} result{filteredUpgrades.length !== 1 ? "s" : ""} for &quot;{search}&quot;
               </span>
@@ -323,14 +328,14 @@ export default function FeedPage() {
       )}
 
       {/* FEED */}
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px 40px", width: "100%" }}>
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 24px", width: "100%", flex: 1 }}>
         {loading ? (
-          <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
+          <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
             Loading upgrades...
           </p>
         ) : upgrades.length === 0 ? (
           <div style={{ textAlign: "center", marginTop: 40 }}>
-            <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 16 }}>
+            <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 16, fontFamily: "var(--font-body)" }}>
               No upgrades yet. Click Fetch Latest to pull from Base GitHub.
             </p>
             <button
@@ -338,82 +343,117 @@ export default function FeedPage() {
               disabled={refreshing}
               style={{
                 padding: "12px 24px",
-                borderRadius: 12,
+                borderRadius: "var(--radius-md)",
                 border: "none",
-                background: "#1F3A8F",
+                background: "var(--accent)",
                 color: "#fff",
                 fontSize: 14,
                 fontWeight: 700,
                 cursor: "pointer",
-                fontFamily: "var(--font-heading)"
+                fontFamily: "var(--font-display)"
               }}
             >
               {refreshing ? "Fetching..." : "Fetch Now"}
             </button>
           </div>
         ) : filteredUpgrades.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
+          <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
             No results found. Try a different keyword or filter.
           </p>
         ) : (
-          filteredUpgrades.map((upgrade) => (
-            <div key={upgrade.id}>
-              <UpgradeCard data={upgrade} isNew={false} />
-              {upgrade.source_url && (
-                <div style={{ marginTop: -12, marginBottom: 20, paddingLeft: 4 }}>
-                  <a
-                    href={upgrade.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontSize: 12, color: "#1F3A8F", textDecoration: "none", fontFamily: "var(--font-mono)" }}
+          <>
+            {pagedUpgrades.map((upgrade) => (
+              <div key={upgrade.id}>
+                <UpgradeCard data={upgrade} isNew={false} />
+                {upgrade.source_url && (
+                  <div style={{ marginTop: -12, marginBottom: 20, paddingLeft: 4 }}>
+                    <a
+                      href={upgrade.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-mono)" }}
+                    >
+                      View original release ↗
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {totalPages > 1 && (
+              <nav aria-label="Feed pagination" style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 24,
+                flexWrap: "wrap"
+              }}>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={pageBtnStyle(false, currentPage === 1)}
+                >
+                  ← Prev
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    style={pageBtnStyle(n === currentPage, false)}
                   >
-                    View original release
-                  </a>
-                </div>
-              )}
-            </div>
-          ))
+                    {n}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  style={pageBtnStyle(false, currentPage === totalPages)}
+                >
+                  Next →
+                </button>
+              </nav>
+            )}
+          </>
         )}
       </div>
 
-      {/* FOOTER */}
-      <footer style={{
-        marginTop: "auto",
-        borderTop: "1px solid #D4D0C8",
-        padding: "20px 32px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        fontSize: 13,
-        color: "#6B7280"
-      }}>
-        <span>Built by</span>
-        <a href="https://x.com/olumi441" target="_blank" rel="noopener noreferrer"
-          style={{ color: "#1F3A8F", fontWeight: 700, textDecoration: "none" }}>
-          Abu Olumi
-        </a>
-        <span>·</span>
-        <a href="https://github.com/2TheMoom/baselens" target="_blank" rel="noopener noreferrer"
-          style={{ color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
-          GitHub
-        </a>
-      </footer>
+      <Footer />
 
     </main>
   );
 }
 
+function pageBtnStyle(active: boolean, disabled: boolean): React.CSSProperties {
+  return {
+    minWidth: 34,
+    height: 34,
+    padding: "0 10px",
+    borderRadius: "var(--radius-sm)",
+    border: "1.5px solid",
+    borderColor: active ? "var(--accent)" : "var(--border)",
+    background: active ? "var(--accent)" : "var(--card-elevated)",
+    color: active ? "#fff" : disabled ? "var(--border)" : "var(--muted)",
+    fontSize: 12.5,
+    fontWeight: 700,
+    cursor: disabled ? "not-allowed" : "pointer",
+    fontFamily: "var(--font-mono)",
+    opacity: disabled ? 0.5 : 1
+  };
+}
+
 function filterColor(level: FilterLevel): string {
-  if (level === "High") return "#B01C2E";
-  if (level === "Medium") return "#B78103";
-  if (level === "Low") return "#1A6B3C";
-  return "#1F3A8F";
+  if (level === "High") return "var(--crimson)";
+  if (level === "Medium") return "var(--amber)";
+  if (level === "Low") return "var(--green)";
+  return "var(--accent)";
 }
 
 function filterBg(level: FilterLevel): string {
-  if (level === "High") return "#B01C2E18";
-  if (level === "Medium") return "#FFF6E5";
-  if (level === "Low") return "#1A6B3C18";
-  return "#1F3A8F18";
+  if (level === "High") return "#B0202A18";
+  if (level === "Medium") return "#A6740F18";
+  if (level === "Low") return "#1F7A4C18";
+  return "var(--accent-soft)";
 }

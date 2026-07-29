@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Feed from "../components/Feed";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { createClient } from "../../lib/lsupabase";
 
 const supabase = createClient();
@@ -141,79 +143,59 @@ export default function Dashboard() {
 
   if (authLoading) {
     return (
-      <main style={{ background: "#E9E6DF", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#6B7280", fontSize: 14, fontFamily: "var(--font-mono)" }}>Loading...</p>
+      <main style={{ background: "var(--background)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "var(--muted)", fontSize: 14, fontFamily: "var(--font-mono)" }}>Loading...</p>
       </main>
     );
   }
 
   return (
-    <main style={{ background: "#E9E6DF", minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "var(--font-heading)" }}>
+    <main style={{ background: "var(--background)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
 
-      {/* HEADER */}
-      <header style={{
-        borderBottom: "1px solid #D4D0C8",
-        padding: "16px 32px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        background: "#E9E6DF"
-      }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
-            <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
-            <circle cx="14" cy="14" r="3" fill="#1F3A8F"/>
-            <line x1="3" y1="14" x2="25" y2="14" stroke="#1A6B3C" strokeWidth="1.2" strokeDasharray="3 2"/>
-            <line x1="22" y1="22" x2="29" y2="29" stroke="#1F3A8F" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="29" cy="29" r="2" fill="#1A6B3C"/>
-          </svg>
-          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.3px", color: "#161719" }}>
-            Base<span style={{ color: "#1F3A8F" }}>Lens</span>
-          </span>
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Link href="/feed" style={{ fontSize: 13, color: "#1F3A8F", textDecoration: "none", fontWeight: 600 }}>
-            Public Feed
-          </Link>
-          <span style={{ fontSize: 13, color: "#6B7280", fontFamily: "var(--font-mono)" }}>
-            {user?.email}
-          </span>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 8,
-              border: "1px solid #D4D0C8",
-              background: "transparent",
-              fontSize: 13,
-              color: "#6B7280",
-              cursor: "pointer",
-              fontFamily: "var(--font-heading)"
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
+      <Header
+        right={
+          <>
+            <Link href="/feed" style={{ fontSize: 13.5, color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>
+              Public Feed
+            </Link>
+            <span style={{ fontSize: 13, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>
+              {user?.email}
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "7px 16px",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--border)",
+                background: "transparent",
+                fontSize: 13,
+                color: "var(--muted)",
+                cursor: "pointer",
+                fontFamily: "var(--font-display)"
+              }}
+            >
+              Sign out
+            </button>
+          </>
+        }
+      />
 
       {/* HERO */}
-      <section style={{ textAlign: "center", padding: "56px 32px 40px" }}>
+      <section style={{ textAlign: "center", padding: "60px 32px 44px" }}>
         <div style={{
           display: "inline-block",
-          background: "#1F3A8F18",
-          color: "#1F3A8F",
+          background: "var(--accent-soft)",
+          color: "var(--accent)",
           fontSize: 11,
           fontWeight: 700,
-          letterSpacing: "0.12em",
+          letterSpacing: "0.14em",
           textTransform: "uppercase",
-          padding: "4px 12px",
-          borderRadius: 20,
-          marginBottom: 20,
+          padding: "5px 14px",
+          borderRadius: "var(--radius-full)",
+          marginBottom: 22,
           fontFamily: "var(--font-mono)"
         }}>
-          AI-Powered. Real-Time. Structured
+          AI-Powered · Real-Time · Structured
         </div>
 
         <h1 style={{
@@ -221,19 +203,21 @@ export default function Dashboard() {
           fontWeight: 800,
           letterSpacing: "-1px",
           lineHeight: 1.15,
-          color: "#161719",
+          color: "var(--foreground)",
           maxWidth: 560,
-          margin: "0 auto 16px"
+          margin: "0 auto 16px",
+          fontFamily: "var(--font-display)"
         }}>
           Understand Every Base Upgrade Clearly
         </h1>
 
         <p style={{
-          color: "#6B7280",
+          color: "var(--muted)",
           maxWidth: 460,
-          margin: "0 auto 32px",
+          margin: "0 auto 36px",
           fontSize: 15,
-          lineHeight: 1.6
+          lineHeight: 1.65,
+          fontFamily: "var(--font-body)"
         }}>
           Paste an official announcement, changelog, or release note.
           Get structured insights instantly.
@@ -249,25 +233,25 @@ export default function Dashboard() {
               width: "100%",
               height: 120,
               padding: "14px 16px",
-              borderRadius: 12,
-              border: "1.5px solid #D4D0C8",
-              background: "#F0EDE7",
-              color: "#161719",
+              borderRadius: "var(--radius-md)",
+              border: "1.5px solid var(--border)",
+              background: "var(--card-elevated)",
+              color: "var(--foreground)",
               fontSize: 14,
               lineHeight: 1.6,
               resize: "none",
               outline: "none",
-              fontFamily: "var(--font-heading)"
+              fontFamily: "var(--font-body)"
             }}
           />
 
-          <p style={{ fontSize: 12, color: "#6B7280", marginTop: 8, textAlign: "left", fontFamily: "var(--font-mono)" }}>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8, textAlign: "left", fontFamily: "var(--font-mono)" }}>
             This tool analyzes structured upgrade information, not general questions.
           </p>
 
           {/* EXAMPLES */}
-          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, color: "#6B7280", paddingTop: 6 }}>Try:</span>
+          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--font-body)" }}>Try:</span>
             <button
               onClick={() => handleExample("Base Azul upgrade introduces improved transaction sequencing and reduced latency across the network.")}
               style={exampleBtn}
@@ -290,15 +274,16 @@ export default function Dashboard() {
               marginTop: 20,
               width: "100%",
               padding: "14px 20px",
-              borderRadius: 12,
+              borderRadius: "var(--radius-md)",
               border: "none",
-              background: !text.trim() || loading ? "#9CA3AF" : "#1F3A8F",
+              background: !text.trim() || loading ? "#9CA3AF" : "var(--accent)",
               color: "#fff",
               fontSize: 15,
               fontWeight: 700,
               cursor: !text.trim() || loading ? "not-allowed" : "pointer",
               letterSpacing: "0.02em",
-              fontFamily: "var(--font-heading)"
+              fontFamily: "var(--font-display)",
+              boxShadow: !text.trim() || loading ? "none" : "var(--shadow-sm)"
             }}
           >
             {loading ? "Analyzing..." : "Analyze Upgrade"}
@@ -306,11 +291,11 @@ export default function Dashboard() {
         </div>
 
         {/* HOW IT WORKS */}
-        <div style={{ marginTop: 32 }}>
+        <div style={{ marginTop: 36 }}>
           <p style={{
             fontSize: 11,
-            color: "#6B7280",
-            letterSpacing: "0.1em",
+            color: "var(--muted)",
+            letterSpacing: "0.12em",
             textTransform: "uppercase",
             fontWeight: 700,
             marginBottom: 16,
@@ -323,14 +308,15 @@ export default function Dashboard() {
             justifyContent: "center",
             gap: 32,
             fontSize: 13,
-            color: "#6B7280",
-            flexWrap: "wrap"
+            color: "var(--muted)",
+            flexWrap: "wrap",
+            fontFamily: "var(--font-body)"
           }}>
             {["Paste an upgrade or changelog", "AI analyzes the changes", "Get a structured breakdown"].map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{
                   width: 20, height: 20, borderRadius: "50%",
-                  background: "#1F3A8F",
+                  background: "var(--accent)",
                   color: "#fff",
                   fontSize: 11,
                   fontWeight: 700,
@@ -351,7 +337,7 @@ export default function Dashboard() {
           <button onClick={clearFeed} style={{
             background: "transparent",
             border: "none",
-            color: "#6B7280",
+            color: "var(--muted)",
             cursor: "pointer",
             fontSize: 12,
             fontFamily: "var(--font-mono)"
@@ -363,7 +349,7 @@ export default function Dashboard() {
 
       {/* EMPTY STATE */}
       {results.length === 0 && (
-        <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14, marginBottom: 40, fontFamily: "var(--font-mono)" }}>
+        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginBottom: 40, fontFamily: "var(--font-mono)" }}>
           No analyses yet. Use an example above to get started.
         </p>
       )}
@@ -371,41 +357,19 @@ export default function Dashboard() {
       {/* FEED */}
       <Feed results={results} />
 
-      {/* FOOTER */}
-      <footer style={{
-        marginTop: "auto",
-        borderTop: "1px solid #D4D0C8",
-        padding: "20px 32px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        fontSize: 13,
-        color: "#6B7280"
-      }}>
-        <span>Built by</span>
-        <a href="https://x.com/olumi441" target="_blank" rel="noopener noreferrer"
-          style={{ color: "#1F3A8F", fontWeight: 700, textDecoration: "none" }}>
-          Abu Olumi
-        </a>
-        <span>·</span>
-        <a href="https://github.com/2TheMoom/baselens" target="_blank" rel="noopener noreferrer"
-          style={{ color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
-          GitHub
-        </a>
-      </footer>
+      <Footer />
 
     </main>
   );
 }
 
 const exampleBtn: React.CSSProperties = {
-  padding: "5px 12px",
-  borderRadius: 20,
-  border: "1px solid #D4D0C8",
-  background: "#F0EDE7",
+  padding: "5px 14px",
+  borderRadius: "var(--radius-full)",
+  border: "1px solid var(--border)",
+  background: "var(--card-elevated)",
   cursor: "pointer",
   fontSize: 12,
-  color: "#161719",
-  fontFamily: "var(--font-heading)"
+  color: "var(--foreground)",
+  fontFamily: "var(--font-body)"
 };

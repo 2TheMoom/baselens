@@ -6,13 +6,15 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// 🔵 Base-only GitHub sources
+// Base-only GitHub sources — verified against the live API before adding.
+// base-org/base-node and base-org/block-explorer were removed: both 404
+// (repos don't exist), so every run silently wasted a request on them.
 const GITHUB_SOURCES = [
   "https://api.github.com/repos/base-org/node/releases",
   "https://api.github.com/repos/base-org/op-enclave/releases",
-  "https://api.github.com/repos/base-org/base-node/releases",
   "https://api.github.com/repos/base-org/withdrawer/releases",
-  "https://api.github.com/repos/base-org/block-explorer/releases"
+  "https://api.github.com/repos/base-org/account-sdk/releases",
+  "https://api.github.com/repos/base-org/contracts/releases"
 ];
 
 async function analyzeWithAI(text: string) {

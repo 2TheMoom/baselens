@@ -55,12 +55,12 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
 
   return (
     <div style={{
-      background: "#F0EDE7",
-      border: "1px solid #D4D0C8",
-      borderRadius: 16,
-      padding: "20px 24px",
+      background: "var(--card-elevated)",
+      border: "1px solid var(--border-soft)",
+      borderRadius: "var(--radius-lg)",
+      padding: "22px 26px",
       marginBottom: 16,
-      boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+      boxShadow: "var(--shadow-sm)",
       transition: "box-shadow 0.2s ease"
     }}>
 
@@ -78,12 +78,12 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
         <div style={{ flex: 1 }}>
           <h2 style={{
             margin: 0,
-            fontSize: 17,
+            fontSize: 18,
             fontWeight: 700,
             letterSpacing: "-0.3px",
             lineHeight: 1.3,
-            color: "#161719",
-            fontFamily: "var(--font-heading)"
+            color: "var(--foreground)",
+            fontFamily: "var(--font-display)"
           }}>
             {data.title}
           </h2>
@@ -94,9 +94,9 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
               <span style={{
                 fontSize: 10,
                 padding: "2px 10px",
-                borderRadius: 20,
-                background: "linear-gradient(90deg, #1F3A8F18, #0052FF12)",
-                color: "#2848B0",
+                borderRadius: "var(--radius-full)",
+                background: "var(--border-soft)",
+                color: "var(--muted)",
                 fontWeight: 700,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase" as const,
@@ -113,7 +113,7 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
           {!isNew && (
             <span style={{
               fontSize: 11,
-              color: "#6B7280",
+              color: "var(--muted)",
               fontFamily: "var(--font-mono)",
               userSelect: "none"
             }}>
@@ -129,8 +129,8 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
           {/* DIVIDER */}
           <div style={{
             height: 1,
-            background: "linear-gradient(90deg, #1F3A8F30, #0052FF20, #D4D0C8)",
-            margin: "14px 0"
+            background: "var(--border)",
+            margin: "16px 0"
           }} />
 
           {/* ANIMATED SECTIONS */}
@@ -140,10 +140,11 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
             if (section.type === "summary") {
               return (
                 <p key={index} style={{
-                  color: "#161719",
-                  fontSize: 14,
+                  color: "var(--foreground)",
+                  fontSize: 14.5,
                   lineHeight: 1.7,
                   margin: 0,
+                  fontFamily: "var(--font-body)",
                   opacity: visible ? 1 : 0,
                   transform: visible ? "translateY(0)" : "translateY(8px)",
                   transition: "opacity 0.5s ease, transform 0.5s ease"
@@ -156,10 +157,10 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
             if (section.type === "significance") {
               return section.content ? (
                 <div key={index} style={{
-                  background: "linear-gradient(135deg, #1F3A8F10, #0052FF08)",
-                  border: "1px solid #2848B025",
-                  padding: "12px 16px",
-                  borderRadius: 10,
+                  background: "var(--accent-soft)",
+                  border: "1px solid #C2481E25",
+                  padding: "13px 16px",
+                  borderRadius: "var(--radius-sm)",
                   marginTop: 14,
                   opacity: visible ? 1 : 0,
                   transform: visible ? "translateY(0)" : "translateY(8px)",
@@ -167,14 +168,14 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
                 }}>
                   <strong style={{
                     fontSize: 10,
-                    color: "#2848B0",
+                    color: "var(--accent)",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase" as const,
                     fontFamily: "var(--font-mono)"
                   }}>
                     Why this matters
                   </strong>
-                  <p style={{ margin: "4px 0 0", color: "#161719", fontSize: 13, lineHeight: 1.6 }}>
+                  <p style={{ margin: "5px 0 0", color: "var(--foreground)", fontSize: 13.5, lineHeight: 1.6, fontFamily: "var(--font-body)" }}>
                     {section.content}
                   </p>
                 </div>
@@ -193,13 +194,13 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
                   fontWeight: 700,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase" as const,
-                  color: "#6B7280",
+                  color: "var(--muted)",
                   marginBottom: 6,
                   fontFamily: "var(--font-mono)"
                 }}>
                   {section.title}
                 </h4>
-                <p style={{ color: "#161719", fontSize: 13, lineHeight: 1.7, margin: 0 }}>
+                <p style={{ color: "var(--foreground)", fontSize: 13.5, lineHeight: 1.7, margin: 0, fontFamily: "var(--font-body)" }}>
                   {section.content}
                 </p>
               </div>

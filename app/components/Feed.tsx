@@ -20,14 +20,14 @@ type Props = {
 export default function Feed({ results }: Props) {
   if (!results || results.length === 0) {
     return (
-      <div style={{ textAlign: "center", marginTop: 40, color: "#8A94A6" }}>
+      <div style={{ textAlign: "center", marginTop: 40, color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: 14 }}>
         No analyses yet. Paste an upgrade above to begin.
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "20px auto", padding: 20 }}>
+    <div style={{ maxWidth: 820, margin: "20px auto", padding: "0 20px 20px", width: "100%", boxSizing: "border-box" }}>
       {results.map((item, index) => (
         <UpgradeCard
           key={item._key || index}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { createClient } from "../../lib/lsupabase";
+import Logo from "../components/Logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -44,43 +44,33 @@ export default function LoginPage() {
 
   return (
     <main style={{
-      background: "#E9E6DF",
+      background: "var(--background)",
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       padding: 20,
-      fontFamily: "var(--font-heading)"
+      fontFamily: "var(--font-body)"
     }}>
       <div style={{
-        background: "#F0EDE7",
-        border: "1px solid #D4D0C8",
-        borderRadius: 20,
+        background: "var(--card-elevated)",
+        border: "1px solid var(--border-soft)",
+        borderRadius: "var(--radius-lg)",
         padding: "40px 36px",
         width: "100%",
         maxWidth: 400,
-        boxShadow: "0 4px 24px rgba(0,0,0,0.08)"
+        boxShadow: "var(--shadow-lg)"
       }}>
 
         {/* LOGO */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, textDecoration: "none" }}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <circle cx="14" cy="14" r="11" stroke="#1F3A8F" strokeWidth="2.5"/>
-            <circle cx="14" cy="14" r="7" stroke="#1F3A8F" strokeWidth="1.5"/>
-            <circle cx="14" cy="14" r="3" fill="#1F3A8F"/>
-            <line x1="3" y1="14" x2="25" y2="14" stroke="#1A6B3C" strokeWidth="1.2" strokeDasharray="3 2"/>
-            <line x1="22" y1="22" x2="29" y2="29" stroke="#1F3A8F" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="29" cy="29" r="2" fill="#1A6B3C"/>
-          </svg>
-          <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.3px", color: "#161719" }}>
-            Base<span style={{ color: "#1F3A8F" }}>Lens</span>
-          </span>
-        </Link>
+        <div style={{ marginBottom: 28 }}>
+          <Logo size={32} />
+        </div>
 
-        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.5px", color: "#161719" }}>
+        <h1 style={{ fontSize: 27, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.5px", color: "var(--foreground)", fontFamily: "var(--font-display)" }}>
           {isSignUp ? "Create account" : "Welcome back"}
         </h1>
-        <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 24 }}>
+        <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>
           {isSignUp ? "Sign up to start analyzing Base upgrades" : "Sign in to your BaseLens account"}
         </p>
 
@@ -92,9 +82,9 @@ export default function LoginPage() {
 
         {/* DIVIDER */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
-          <div style={{ flex: 1, height: 1, background: "#D4D0C8" }} />
-          <span style={{ fontSize: 12, color: "#6B7280", fontFamily: "var(--font-mono)" }}>or</span>
-          <div style={{ flex: 1, height: 1, background: "#D4D0C8" }} />
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
 
         {/* EMAIL INPUT */}
@@ -118,7 +108,7 @@ export default function LoginPage() {
         {message && (
           <p style={{
             fontSize: 13,
-            color: message.includes("Check") ? "#1A6B3C" : "#B01C2E",
+            color: message.includes("Check") ? "var(--green)" : "var(--crimson)",
             marginTop: 10,
             fontFamily: "var(--font-mono)"
           }}>
@@ -134,14 +124,14 @@ export default function LoginPage() {
             marginTop: 16,
             width: "100%",
             padding: "13px 20px",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             border: "none",
-            background: !email || !password || loading ? "#9CA3AF" : "#1F3A8F",
+            background: !email || !password || loading ? "#9CA3AF" : "var(--accent)",
             color: "#fff",
             fontSize: 15,
             fontWeight: 700,
             cursor: !email || !password || loading ? "not-allowed" : "pointer",
-            fontFamily: "var(--font-heading)",
+            fontFamily: "var(--font-display)",
             letterSpacing: "0.02em"
           }}
         >
@@ -149,12 +139,12 @@ export default function LoginPage() {
         </button>
 
         {/* TOGGLE */}
-        <p style={{ textAlign: "center", fontSize: 13, color: "#6B7280", marginTop: 20 }}>
+        <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginTop: 20 }}>
           {isSignUp ? "Already have an account?" : "Don't have an account?"}
           {" "}
           <button
             onClick={() => { setIsSignUp(!isSignUp); setMessage(""); }}
-            style={{ background: "none", border: "none", color: "#1F3A8F", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
+            style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
@@ -168,9 +158,9 @@ export default function LoginPage() {
 const socialBtn: React.CSSProperties = {
   width: "100%",
   padding: "12px 16px",
-  borderRadius: 12,
-  border: "1.5px solid #D4D0C8",
-  background: "#E9E6DF",
+  borderRadius: "var(--radius-md)",
+  border: "1.5px solid var(--border)",
+  background: "var(--background)",
   fontSize: 14,
   fontWeight: 500,
   cursor: "pointer",
@@ -178,18 +168,18 @@ const socialBtn: React.CSSProperties = {
   alignItems: "center",
   gap: 10,
   marginBottom: 10,
-  color: "#161719",
-  fontFamily: "var(--font-heading)"
+  color: "var(--foreground)",
+  fontFamily: "var(--font-body)"
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px 14px",
-  borderRadius: 12,
-  border: "1.5px solid #D4D0C8",
-  background: "#E9E6DF",
+  borderRadius: "var(--radius-md)",
+  border: "1.5px solid var(--border)",
+  background: "var(--background)",
   fontSize: 14,
-  color: "#161719",
+  color: "var(--foreground)",
   outline: "none",
-  fontFamily: "var(--font-heading)"
+  fontFamily: "var(--font-body)"
 };
