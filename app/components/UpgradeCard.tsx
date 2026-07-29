@@ -29,13 +29,16 @@ type Props = {
 };
 
 export default function UpgradeCard({ data, isNew = false, expanded = false, onToggle }: Props) {
+  // Ordered for a general Base user first, developer detail last: plain-language
+  // summary and personal impact lead, the technical changelog detail and the
+  // developer-specific section come after, visually separated below.
   const sections: SectionItem[] = [
     { title: "Summary", content: data.summary, type: "summary" },
+    { title: "What this means for you", content: data.user_impact, type: "section" },
     { title: "Why this matters", content: data.significance_reason, type: "significance" },
-    { title: "What changed", content: data.what_changed, type: "section" },
     { title: "Why it changed", content: data.why_it_changed, type: "section" },
-    { title: "User impact", content: data.user_impact, type: "section" },
-    { title: "Developer impact", content: data.developer_impact, type: "section" },
+    { title: "What changed", content: data.what_changed, type: "section" },
+    { title: "For developers", content: data.developer_impact, type: "developer" },
   ];
 
   const [visibleSections, setVisibleSections] = useState(isNew ? 0 : 99);
@@ -177,6 +180,34 @@ export default function UpgradeCard({ data, isNew = false, expanded = false, onT
                     Why this matters
                   </strong>
                   <p style={{ margin: "5px 0 0", color: "var(--foreground)", fontSize: 13.5, lineHeight: 1.6, fontFamily: "var(--font-body)" }}>
+                    {section.content}
+                  </p>
+                </div>
+              ) : null;
+            }
+
+            if (section.type === "developer") {
+              return section.content ? (
+                <div key={index} style={{
+                  marginTop: 20,
+                  paddingTop: 16,
+                  borderTop: "1px dashed var(--border)",
+                  opacity: visible ? 1 : 0,
+                  transform: visible ? "translateY(0)" : "translateY(8px)",
+                  transition: "opacity 0.5s ease, transform 0.5s ease"
+                }}>
+                  <h4 style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase" as const,
+                    color: "var(--muted)",
+                    marginBottom: 6,
+                    fontFamily: "var(--font-mono)"
+                  }}>
+                    {section.title}
+                  </h4>
+                  <p style={{ color: "var(--foreground)", fontSize: 13.5, lineHeight: 1.7, margin: 0, fontFamily: "var(--font-body)" }}>
                     {section.content}
                   </p>
                 </div>
