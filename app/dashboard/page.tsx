@@ -35,6 +35,8 @@ export default function Dashboard() {
   const [recentInputs, setRecentInputs] = useState<string[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [subscribed, setSubscribed] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
 
   useEffect(() => {
     async function checkUser() {
@@ -62,6 +64,40 @@ export default function Dashboard() {
     }
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    async function loadSubscription() {
+      const { data } = await supabase
+        .from("digest_subscribers")
+        .select("confirmed")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      setSubscribed(!!data?.confirmed);
+    }
+    loadSubscription();
+  }, [user]);
+
+  async function toggleSubscription() {
+    if (!user?.email || subLoading) return;
+    setSubLoading(true);
+    try {
+      if (subscribed) {
+        await supabase.from("digest_subscribers").delete().eq("user_id", user.id);
+        setSubscribed(false);
+      } else {
+        await supabase.from("digest_subscribers").upsert(
+          { email: user.email, user_id: user.id, confirmed: true, confirmed_at: new Date().toISOString() },
+          { onConflict: "email" }
+        );
+        setSubscribed(true);
+      }
+    } catch (err) {
+      console.error("Subscription toggle failed:", err);
+    } finally {
+      setSubLoading(false);
+    }
+  }
 
   async function analyze() {
     if (!text.trim() || !user) return;
@@ -225,6 +261,27 @@ export default function Dashboard() {
           Paste an official announcement, changelog, or release note.
           Get structured insights instantly.
         </p>
+
+        {/* DIGEST SUBSCRIPTION TOGGLE */}
+        <label style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 32,
+          fontSize: 13,
+          color: "var(--muted)",
+          fontFamily: "var(--font-body)",
+          cursor: subLoading ? "not-allowed" : "pointer"
+        }}>
+          <input
+            type="checkbox"
+            checked={subscribed}
+            onChange={toggleSubscription}
+            disabled={subLoading}
+            style={{ accentColor: "#C2481E", width: 15, height: 15, cursor: "inherit" }}
+          />
+          Email me when new Base upgrades are published
+        </label>
 
         {/* TEXTAREA */}
         <div style={{ maxWidth: 600, margin: "0 auto" }}>

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/lsupabase";
 import UpgradeCard from "../components/UpgradeCard";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Pagination from "../components/Pagination";
+import SubscribeForm from "../components/SubscribeForm";
 
 const supabase = createClient();
 
@@ -31,6 +33,14 @@ type PublicUpgrade = {
 type FilterLevel = "All" | "High" | "Medium" | "Low";
 
 export default function FeedPage() {
+  return (
+    <Suspense fallback={null}>
+      <FeedContent />
+    </Suspense>
+  );
+}
+
+function FeedContent() {
   const [upgrades, setUpgrades] = useState<PublicUpgrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,6 +49,14 @@ export default function FeedPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  const subscribeStatus = searchParams.get("subscribe");
+  const subscribeBanner =
+    subscribeStatus === "confirmed" ? "You're subscribed — we'll email you when new upgrades ship." :
+    subscribeStatus === "unsubscribed" ? "You've been unsubscribed from the digest." :
+    subscribeStatus === "invalid" ? "That link is invalid or has expired." :
+    "";
 
   async function loadUpgrades() {
     const { data, error } = await supabase
@@ -192,6 +210,22 @@ export default function FeedPage() {
             {message}
           </p>
         )}
+
+        {subscribeBanner && (
+          <p style={{
+            marginTop: 18,
+            fontSize: 13,
+            color: "var(--green)",
+            fontWeight: 600,
+            fontFamily: "var(--font-mono)"
+          }}>
+            {subscribeBanner}
+          </p>
+        )}
+
+        <div style={{ marginTop: 24 }}>
+          <SubscribeForm />
+        </div>
       </section>
 
       {/* STATS + FILTERS + SEARCH */}
