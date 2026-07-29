@@ -14,6 +14,12 @@ const MAX_NEW_PER_RUN = 10;
 // Without a token we're capped at 60 GitHub API requests/hour, so keep the
 // scan small enough to fit that. With GITHUB_TOKEN set, scan the whole org.
 const REPO_SCAN_LIMIT = process.env.GITHUB_TOKEN ? 200 : 40;
+// Bounded concurrency for the release-listing fan-out, so a full-org scan
+// doesn't run one repo at a time (that's what pushed a real run to 1m43s).
+const FETCH_CONCURRENCY = 15;
+// Bounded concurrency for the OpenAI analysis calls — the other big
+// contributor to that run's time, at ~7s/call sequentially.
+const ANALYZE_CONCURRENCY = 4;
 
 function githubHeaders() {
   const headers: Record<string, string> = {
@@ -26,11 +32,34 @@ function githubHeaders() {
   return headers;
 }
 
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let index = 0;
+
+  async function worker() {
+    while (index < items.length) {
+      const current = index++;
+      results[current] = await fn(items[current]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 type GithubRepo = {
   name: string;
   fork: boolean;
   archived: boolean;
   pushed_at: string;
+};
+
+type Candidate = {
+  repo: string;
+  title: string;
+  body: string;
+  releaseUrl: string;
+  publishedAt: string;
 };
 
 // Discovers active repos in the Base org instead of relying on a hardcoded
@@ -62,6 +91,35 @@ async function fetchActiveRepos(): Promise<GithubRepo[]> {
     .filter((repo) => !repo.fork && !repo.archived)
     .sort((a, b) => new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime())
     .slice(0, REPO_SCAN_LIMIT);
+}
+
+// Fetches releases for every scanned repo concurrently (bounded) instead of
+// one at a time — the sequential version is what made a full-org scan take
+// over 100 seconds, well past the serverless timeout.
+async function fetchCandidates(repos: GithubRepo[]): Promise<Candidate[]> {
+  const perRepo = await mapWithConcurrency(repos, FETCH_CONCURRENCY, async (repo): Promise<Candidate[]> => {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_ORG}/${repo.name}/releases?per_page=3`, {
+        headers: githubHeaders()
+      });
+      if (!res.ok) return [];
+
+      const releases = await res.json();
+      if (!Array.isArray(releases)) return [];
+
+      return releases.map((release) => ({
+        repo: repo.name,
+        title: release.name || release.tag_name,
+        body: release.body || "",
+        releaseUrl: release.html_url,
+        publishedAt: release.published_at || release.created_at || ""
+      }));
+    } catch {
+      return [];
+    }
+  });
+
+  return perRepo.flat();
 }
 
 async function analyzeWithAI(text: string) {
@@ -132,57 +190,29 @@ export async function GET() {
     const repos = await fetchActiveRepos();
     console.log(`Scanning ${repos.length} active (non-fork, non-archived) repos in ${GITHUB_ORG} org`);
 
-    let newCount = 0;
-    let skippedCount = 0;
+    const allReleases = await fetchCandidates(repos);
 
-    for (const repo of repos) {
-      if (newCount >= MAX_NEW_PER_RUN) {
-        console.log(`Reached ${MAX_NEW_PER_RUN} new upgrades this run — stopping early, rest picked up next run`);
-        break;
-      }
+    // One query instead of one-per-release — the per-release version was
+    // the other big contributor to that 1m43s run.
+    const { data: existingRows } = await supabase.from("public_upgrades").select("source_url");
+    const existingUrls = new Set((existingRows || []).map((r) => r.source_url));
 
-      const releasesUrl = `https://api.github.com/repos/${GITHUB_ORG}/${repo.name}/releases?per_page=3`;
-      const res = await fetch(releasesUrl, { headers: githubHeaders() });
+    const qualified = allReleases.filter((r) => r.body && r.body.length >= 20 && !existingUrls.has(r.releaseUrl));
+    qualified.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-      if (!res.ok) {
-        continue;
-      }
+    const skippedCount = allReleases.length - qualified.length;
+    const toProcess = qualified.slice(0, MAX_NEW_PER_RUN);
 
-      const releases = await res.json();
-      if (!Array.isArray(releases) || releases.length === 0) {
-        continue;
-      }
-
-      for (const release of releases) {
-        if (newCount >= MAX_NEW_PER_RUN) break;
-
-        const title = release.name || release.tag_name;
-        const body = release.body || "";
-        const releaseUrl = release.html_url;
-
-        if (!body || body.length < 20) {
-          skippedCount++;
-          continue;
-        }
-
-        // Check if already analyzed
-        const { data: existing } = await supabase
-          .from("public_upgrades")
-          .select("id")
-          .eq("source_url", releaseUrl)
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          skippedCount++;
-          continue;
-        }
-
-        // Analyze with AI
-        console.log(`Analyzing: ${repo.name} — ${title}`);
-        const content = `Base blockchain release (${repo.name}): ${title}\n\nRelease notes:\n${body}`;
+    // The AI analysis calls, not the GitHub fetches, are what pushed a real
+    // run to 1m19s (10 sequential OpenAI calls). Bounded concurrency here
+    // instead of one-at-a-time keeps the per-run cap at 10 while actually
+    // fitting inside the serverless timeout.
+    const results = await mapWithConcurrency(toProcess, ANALYZE_CONCURRENCY, async (candidate): Promise<boolean> => {
+      try {
+        console.log(`Analyzing: ${candidate.repo} — ${candidate.title}`);
+        const content = `Base blockchain release (${candidate.repo}): ${candidate.title}\n\nRelease notes:\n${candidate.body}`;
         const analyzed = await analyzeWithAI(content);
 
-        // Save to public_upgrades
         const { error } = await supabase.from("public_upgrades").insert([{
           title: analyzed.title,
           summary: analyzed.summary,
@@ -193,15 +223,24 @@ export async function GET() {
           developer_impact: analyzed.developer_impact,
           significance_reason: analyzed.significance_reason,
           impact_level: analyzed.impact_level,
-          source_url: releaseUrl
+          source_url: candidate.releaseUrl
         }]);
 
         if (error) {
           console.error("Insert error:", error);
-        } else {
-          newCount++;
+          return false;
         }
+        return true;
+      } catch (err) {
+        console.error(`Failed to analyze ${candidate.repo} — ${candidate.title}:`, err);
+        return false;
       }
+    });
+
+    const newCount = results.filter(Boolean).length;
+
+    if (qualified.length > MAX_NEW_PER_RUN) {
+      console.log(`${qualified.length - MAX_NEW_PER_RUN} more qualified releases queued for the next run`);
     }
 
     console.log(`Done. ${newCount} new, ${skippedCount} skipped, ${repos.length} repos scanned.`);
