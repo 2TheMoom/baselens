@@ -323,15 +323,33 @@ function FeedContent() {
                   }}>
                     {upgrade.summary}
                   </span>
-                  <span style={{
-                    fontSize: 12,
-                    color: "var(--accent)",
-                    fontFamily: "var(--font-mono)",
-                    fontWeight: 600,
-                    marginTop: 2
-                  }}>
-                    Read full analysis →
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
+                    <span style={{
+                      fontSize: 12,
+                      color: "var(--accent)",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 600
+                    }}>
+                      Read full analysis →
+                    </span>
+                    {upgrade.source_url && (
+                      <a
+                        href={upgrade.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          fontSize: 11,
+                          color: "var(--muted)",
+                          fontFamily: "var(--font-mono)",
+                          fontWeight: 600,
+                          textDecoration: "none"
+                        }}
+                      >
+                        Source ↗
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
