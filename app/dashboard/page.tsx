@@ -10,6 +10,7 @@ import { createClient } from "../../lib/lsupabase";
 const supabase = createClient();
 
 type UpgradeResult = {
+  id?: string;
   title: string;
   summary: string;
   category: string;
@@ -19,6 +20,7 @@ type UpgradeResult = {
   developer_impact: string;
   significance_reason: string;
   impact_level: string;
+  published_to_public?: boolean;
   _key?: number;
 };
 
@@ -138,7 +140,7 @@ export default function Dashboard() {
         return;
       }
 
-      const { error } = await supabase.from("upgrades").insert([{
+      const { data: inserted, error } = await supabase.from("upgrades").insert([{
         title: data.title,
         summary: data.summary,
         category: data.category,
@@ -149,12 +151,12 @@ export default function Dashboard() {
         significance_reason: data.significance_reason,
         impact_level: data.impact_level,
         user_id: user.id
-      }]);
+      }]).select().single();
 
       if (error) console.error("Insert error:", error);
 
       setRecentInputs((prev) => [...prev, normalizedInput]);
-      const newResult = { ...data, _key: Date.now() };
+      const newResult = { ...data, id: inserted?.id, published_to_public: false, _key: Date.now() };
       setResults((prev) => [newResult, ...prev]);
       setPage(1);
       setText("");
@@ -163,6 +165,34 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function publishToCommunityFeed(result: UpgradeResult, sourceUrl: string) {
+    if (!result.id) return;
+
+    const { error } = await supabase.from("public_upgrades").insert([{
+      title: result.title,
+      summary: result.summary,
+      category: result.category,
+      what_changed: result.what_changed,
+      why_it_changed: result.why_it_changed,
+      user_impact: result.user_impact,
+      developer_impact: result.developer_impact,
+      significance_reason: result.significance_reason,
+      impact_level: result.impact_level,
+      source_url: sourceUrl || null,
+      source_type: "community"
+    }]);
+
+    if (error) {
+      console.error("Publish error:", error);
+      alert("Failed to publish to the public feed. Try again.");
+      return;
+    }
+
+    await supabase.from("upgrades").update({ published_to_public: true }).eq("id", result.id);
+
+    setResults((prev) => prev.map((r) => (r.id === result.id ? { ...r, published_to_public: true } : r)));
   }
 
   async function handleLogout() {
@@ -415,7 +445,7 @@ export default function Dashboard() {
       )}
 
       {/* FEED */}
-      <Feed results={results} page={page} onPageChange={setPage} />
+      <Feed results={results} page={page} onPageChange={setPage} onPublish={publishToCommunityFeed} />
 
       <Footer />
 

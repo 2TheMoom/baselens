@@ -12,6 +12,7 @@ type UpgradeResult = {
   developer_impact: string;
   significance_reason: string;
   impact_level: string;
+  source_type?: string;
   _key?: number;
 };
 
@@ -26,9 +27,14 @@ type Props = {
   isNew?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
+  onPublish?: (sourceUrl: string) => void | Promise<void>;
+  published?: boolean;
 };
 
-export default function UpgradeCard({ data, isNew = false, expanded = false, onToggle }: Props) {
+export default function UpgradeCard({ data, isNew = false, expanded = false, onToggle, onPublish, published = false }: Props) {
+  const [showPublishForm, setShowPublishForm] = useState(false);
+  const [sourceUrlInput, setSourceUrlInput] = useState("");
+  const [publishing, setPublishing] = useState(false);
   // Ordered for a general Base user first, developer detail last: plain-language
   // summary and personal impact lead, the technical changelog detail and the
   // developer-specific section come after, visually separated below.
@@ -92,22 +98,39 @@ export default function UpgradeCard({ data, isNew = false, expanded = false, onT
             {data.title}
           </h2>
 
-          {/* CATEGORY */}
-          {data.category && (
-            <div style={{ marginTop: 8 }}>
-              <span style={{
-                fontSize: 10,
-                padding: "2px 10px",
-                borderRadius: "var(--radius-full)",
-                background: "var(--border-soft)",
-                color: "var(--muted)",
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase" as const,
-                fontFamily: "var(--font-mono)"
-              }}>
-                {data.category}
-              </span>
+          {/* CATEGORY + SOURCE TYPE */}
+          {(data.category || data.source_type === "community") && (
+            <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {data.source_type === "community" && (
+                <span style={{
+                  fontSize: 10,
+                  padding: "2px 10px",
+                  borderRadius: "var(--radius-full)",
+                  background: "var(--accent-soft)",
+                  color: "var(--accent)",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase" as const,
+                  fontFamily: "var(--font-mono)"
+                }}>
+                  Community
+                </span>
+              )}
+              {data.category && (
+                <span style={{
+                  fontSize: 10,
+                  padding: "2px 10px",
+                  borderRadius: "var(--radius-full)",
+                  background: "var(--border-soft)",
+                  color: "var(--muted)",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase" as const,
+                  fontFamily: "var(--font-mono)"
+                }}>
+                  {data.category}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -238,6 +261,98 @@ export default function UpgradeCard({ data, isNew = false, expanded = false, onT
               </div>
             );
           })}
+
+          {/* PUBLISH TO COMMUNITY FEED — only rendered when the parent passes onPublish (dashboard context) */}
+          {onPublish && (
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed var(--border)" }}>
+              {published ? (
+                <span style={{ fontSize: 12, color: "var(--green)", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                  ✓ Published to community feed
+                </span>
+              ) : showPublishForm ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input
+                    type="url"
+                    placeholder="Source URL (optional) — link to the original post"
+                    value={sourceUrlInput}
+                    onChange={(e) => setSourceUrlInput(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1.5px solid var(--border)",
+                      background: "var(--background)",
+                      fontSize: 13,
+                      color: "var(--foreground)",
+                      outline: "none",
+                      fontFamily: "var(--font-body)"
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setPublishing(true);
+                        try {
+                          await onPublish(sourceUrlInput.trim());
+                        } finally {
+                          setPublishing(false);
+                          setShowPublishForm(false);
+                        }
+                      }}
+                      disabled={publishing}
+                      style={{
+                        padding: "7px 16px",
+                        borderRadius: "var(--radius-sm)",
+                        border: "none",
+                        background: "var(--accent)",
+                        color: "#fff",
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        cursor: publishing ? "not-allowed" : "pointer",
+                        fontFamily: "var(--font-display)"
+                      }}
+                    >
+                      {publishing ? "Publishing..." : "Confirm publish"}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowPublishForm(false); }}
+                      style={{
+                        padding: "7px 16px",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--border)",
+                        background: "transparent",
+                        color: "var(--muted)",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        fontFamily: "var(--font-display)"
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowPublishForm(true); }}
+                  style={{
+                    padding: "7px 16px",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--border)",
+                    background: "var(--card-elevated)",
+                    color: "var(--foreground)",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "var(--font-display)"
+                  }}
+                >
+                  Publish to Community Feed
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

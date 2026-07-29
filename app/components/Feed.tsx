@@ -7,6 +7,7 @@ import Pagination from "./Pagination";
 const PAGE_SIZE = 6;
 
 type UpgradeResult = {
+  id?: string;
   title: string;
   summary: string;
   category: string;
@@ -16,6 +17,7 @@ type UpgradeResult = {
   developer_impact: string;
   significance_reason: string;
   impact_level: string;
+  published_to_public?: boolean;
   _key?: number;
 };
 
@@ -23,9 +25,10 @@ type Props = {
   results: UpgradeResult[];
   page: number;
   onPageChange: (page: number) => void;
+  onPublish?: (result: UpgradeResult, sourceUrl: string) => void | Promise<void>;
 };
 
-export default function Feed({ results, page, onPageChange }: Props) {
+export default function Feed({ results, page, onPageChange, onPublish }: Props) {
   const [expandedKey, setExpandedKey] = useState<number | null>(null);
 
   if (!results || results.length === 0) {
@@ -53,6 +56,8 @@ export default function Feed({ results, page, onPageChange }: Props) {
             isNew={index === 0 && !!item._key}
             expanded={expandedKey === cardKey}
             onToggle={() => setExpandedKey((prev) => (prev === cardKey ? null : cardKey))}
+            onPublish={onPublish ? (sourceUrl) => onPublish(item, sourceUrl) : undefined}
+            published={item.published_to_public}
           />
         );
       })}

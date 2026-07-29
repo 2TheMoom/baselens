@@ -26,6 +26,7 @@ type PublicUpgrade = {
   significance_reason: string;
   impact_level: string;
   source_url: string;
+  source_type?: string;
   created_at: string;
   _key?: number;
 };
