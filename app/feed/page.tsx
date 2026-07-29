@@ -50,6 +50,7 @@ function FeedContent() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedCommunityItem, setSelectedCommunityItem] = useState<PublicUpgrade | null>(null);
 
   const searchParams = useSearchParams();
   const subscribeStatus = searchParams.get("subscribe");
@@ -101,8 +102,21 @@ function FeedContent() {
     }
   }
 
+  // Kept visually and structurally separate so the two never blur together:
+  // community announcements (Farcaster / manually curated) get their own
+  // strip above, while the stats/search/impact-filter/pagination apparatus
+  // below only ever operates on developer releases.
+  const communityUpgrades = useMemo(
+    () => upgrades.filter((u) => u.source_type === "community"),
+    [upgrades]
+  );
+  const releaseUpgrades = useMemo(
+    () => upgrades.filter((u) => u.source_type !== "community"),
+    [upgrades]
+  );
+
   const filteredUpgrades = useMemo(() => {
-    return upgrades
+    return releaseUpgrades
       .filter((u) => filter === "All" || u.impact_level === filter)
       .filter((u) => {
         if (!search.trim()) return true;
@@ -115,7 +129,7 @@ function FeedContent() {
           u.why_it_changed?.toLowerCase().includes(q)
         );
       });
-  }, [upgrades, filter, search]);
+  }, [releaseUpgrades, filter, search]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUpgrades.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -124,9 +138,9 @@ function FeedContent() {
     currentPage * PAGE_SIZE
   );
 
-  const highCount = upgrades.filter((u) => u.impact_level === "High").length;
-  const mediumCount = upgrades.filter((u) => u.impact_level === "Medium").length;
-  const lowCount = upgrades.filter((u) => u.impact_level === "Low").length;
+  const highCount = releaseUpgrades.filter((u) => u.impact_level === "High").length;
+  const mediumCount = releaseUpgrades.filter((u) => u.impact_level === "Medium").length;
+  const lowCount = releaseUpgrades.filter((u) => u.impact_level === "Low").length;
 
   return (
     <main style={{ background: "var(--background)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -229,9 +243,174 @@ function FeedContent() {
         </div>
       </section>
 
+      {/* COMMUNITY SECTION — a fixed-height horizontal strip so it stays the
+          same size whether there's 1 update or 20, instead of a vertical
+          stack of full cards that grows without bound */}
+      {!loading && communityUpgrades.length > 0 && (
+        <div style={{
+          width: "100%",
+          background: "var(--accent-soft)",
+          borderTop: "1px solid #C2481E25",
+          borderBottom: "1px solid #C2481E25",
+          padding: "20px 0"
+        }}>
+          <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px" }}>
+            <p style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--accent)",
+              marginBottom: 14,
+              fontFamily: "var(--font-mono)"
+            }}>
+              Community — from Base
+            </p>
+            <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 6 }}>
+              {communityUpgrades.map((upgrade) => (
+                <div
+                  key={upgrade.id}
+                  onClick={() => setSelectedCommunityItem(upgrade)}
+                  style={{
+                    flex: "0 0 auto",
+                    width: 300,
+                    background: "var(--card-elevated)",
+                    border: "1px solid var(--border-soft)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "18px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                    boxShadow: "var(--shadow-sm)",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{
+                    alignSelf: "flex-start",
+                    fontSize: 10,
+                    padding: "3px 9px",
+                    borderRadius: "var(--radius-full)",
+                    background: filterBg(upgrade.impact_level as FilterLevel),
+                    color: filterColor(upgrade.impact_level as FilterLevel),
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    fontFamily: "var(--font-mono)"
+                  }}>
+                    {upgrade.impact_level}
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: "var(--foreground)",
+                    lineHeight: 1.35,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical" as const,
+                    overflow: "hidden"
+                  }}>
+                    {upgrade.title}
+                  </span>
+                  <span style={{
+                    fontSize: 13,
+                    color: "var(--muted)",
+                    lineHeight: 1.6,
+                    fontFamily: "var(--font-body)",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical" as const,
+                    overflow: "hidden"
+                  }}>
+                    {upgrade.summary}
+                  </span>
+                  <span style={{
+                    fontSize: 12,
+                    color: "var(--accent)",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 600,
+                    marginTop: 2
+                  }}>
+                    Read full analysis →
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* COMMUNITY ITEM MODAL — full AI analysis, not just a link out to a
+          source that may not even exist for manually-curated items */}
+      {selectedCommunityItem && (
+        <div
+          onClick={() => setSelectedCommunityItem(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(20, 21, 26, 0.55)",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            padding: "40px 20px",
+            overflowY: "auto",
+            zIndex: 100
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 560, width: "100%" }}
+          >
+            <button
+              onClick={() => setSelectedCommunityItem(null)}
+              style={{
+                display: "block",
+                marginLeft: "auto",
+                marginBottom: 10,
+                background: "var(--card-elevated)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-full)",
+                width: 32,
+                height: 32,
+                color: "var(--muted)",
+                cursor: "pointer",
+                fontSize: 14
+              }}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            <UpgradeCard data={selectedCommunityItem} isNew={false} expanded={true} onToggle={() => {}} />
+            {selectedCommunityItem.source_url && (
+              <div style={{ marginTop: -12, paddingLeft: 4 }}>
+                <a
+                  href={selectedCommunityItem.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-mono)" }}
+                >
+                  View original post ↗
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* STATS + FILTERS + SEARCH */}
-      {!loading && upgrades.length > 0 && (
-        <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 20px", width: "100%" }}>
+      {!loading && releaseUpgrades.length > 0 && (
+        <div style={{ maxWidth: 820, margin: "0 auto", padding: "20px 20px 20px", width: "100%" }}>
+
+          <p style={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--muted)",
+            marginBottom: 14,
+            fontFamily: "var(--font-mono)"
+          }}>
+            Upgrades — from GitHub
+          </p>
 
           {/* STATS ROW */}
           <div style={{ display: "flex", gap: 12, marginBottom: 22, flexWrap: "wrap" }}>
@@ -370,7 +549,7 @@ function FeedContent() {
           <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginTop: 40, fontFamily: "var(--font-mono)" }}>
             Loading upgrades...
           </p>
-        ) : upgrades.length === 0 ? (
+        ) : releaseUpgrades.length === 0 ? (
           <div style={{ textAlign: "center", marginTop: 40 }}>
             <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 16, fontFamily: "var(--font-body)" }}>
               No upgrades yet. Click Fetch Latest to pull from Base GitHub.
