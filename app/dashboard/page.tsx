@@ -30,6 +30,7 @@ type User = {
 export default function Dashboard() {
   const [text, setText] = useState("");
   const [results, setResults] = useState<UpgradeResult[]>([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [recentInputs, setRecentInputs] = useState<string[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -119,6 +120,7 @@ export default function Dashboard() {
       setRecentInputs((prev) => [...prev, normalizedInput]);
       const newResult = { ...data, _key: Date.now() };
       setResults((prev) => [newResult, ...prev]);
+      setPage(1);
       setText("");
     } catch (err) {
       console.error("Analyze failed:", err);
@@ -135,6 +137,7 @@ export default function Dashboard() {
   function clearFeed() {
     setResults([]);
     setRecentInputs([]);
+    setPage(1);
   }
 
   function handleExample(example: string) {
@@ -355,7 +358,7 @@ export default function Dashboard() {
       )}
 
       {/* FEED */}
-      <Feed results={results} />
+      <Feed results={results} page={page} onPageChange={setPage} />
 
       <Footer />
 

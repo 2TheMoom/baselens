@@ -6,6 +6,7 @@ import { createClient } from "../../lib/lsupabase";
 import UpgradeCard from "../components/UpgradeCard";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Pagination from "../components/Pagination";
 
 const supabase = createClient();
 
@@ -380,42 +381,7 @@ export default function FeedPage() {
               </div>
             ))}
 
-            {totalPages > 1 && (
-              <nav aria-label="Feed pagination" style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 6,
-                marginTop: 24,
-                flexWrap: "wrap"
-              }}>
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  style={pageBtnStyle(false, currentPage === 1)}
-                >
-                  ← Prev
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setPage(n)}
-                    style={pageBtnStyle(n === currentPage, false)}
-                  >
-                    {n}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  style={pageBtnStyle(false, currentPage === totalPages)}
-                >
-                  Next →
-                </button>
-              </nav>
-            )}
+            <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
           </>
         )}
       </div>
@@ -424,24 +390,6 @@ export default function FeedPage() {
 
     </main>
   );
-}
-
-function pageBtnStyle(active: boolean, disabled: boolean): React.CSSProperties {
-  return {
-    minWidth: 34,
-    height: 34,
-    padding: "0 10px",
-    borderRadius: "var(--radius-sm)",
-    border: "1.5px solid",
-    borderColor: active ? "var(--accent)" : "var(--border)",
-    background: active ? "var(--accent)" : "var(--card-elevated)",
-    color: active ? "#fff" : disabled ? "var(--border)" : "var(--muted)",
-    fontSize: 12.5,
-    fontWeight: 700,
-    cursor: disabled ? "not-allowed" : "pointer",
-    fontFamily: "var(--font-mono)",
-    opacity: disabled ? 0.5 : 1
-  };
 }
 
 function filterColor(level: FilterLevel): string {
