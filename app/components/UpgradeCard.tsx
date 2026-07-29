@@ -24,9 +24,11 @@ type SectionItem = {
 type Props = {
   data: UpgradeResult;
   isNew?: boolean;
+  expanded?: boolean;
+  onToggle?: () => void;
 };
 
-export default function UpgradeCard({ data, isNew = false }: Props) {
+export default function UpgradeCard({ data, isNew = false, expanded = false, onToggle }: Props) {
   const sections: SectionItem[] = [
     { title: "Summary", content: data.summary, type: "summary" },
     { title: "Why this matters", content: data.significance_reason, type: "significance" },
@@ -37,7 +39,6 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
   ];
 
   const [visibleSections, setVisibleSections] = useState(isNew ? 0 : 99);
-  const [expanded, setExpanded] = useState(isNew ? true : false);
 
   useEffect(() => {
     if (!isNew) return;
@@ -66,7 +67,7 @@ export default function UpgradeCard({ data, isNew = false }: Props) {
 
       {/* HEADER — always visible, click to expand/collapse */}
       <div
-        onClick={() => !isNew && setExpanded((prev) => !prev)}
+        onClick={() => { if (!isNew) onToggle?.(); }}
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -222,7 +223,7 @@ function impactStyle(level: string) {
     fontFamily: "var(--font-mono)",
     letterSpacing: "0.06em"
   };
-  if (level === "High") return { ...base, background: "#B01C2E18", color: "#B01C2E" };
-  if (level === "Medium") return { ...base, background: "#FFF6E5", color: "#B78103" };
-  return { ...base, background: "#1A6B3C18", color: "#1A6B3C" };
+  if (level === "High") return { ...base, background: "#B0202A18", color: "#B0202A" };
+  if (level === "Medium") return { ...base, background: "#A6740F18", color: "#A6740F" };
+  return { ...base, background: "#1F7A4C18", color: "#1F7A4C" };
 }

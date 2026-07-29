@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import UpgradeCard from "./UpgradeCard";
 import Pagination from "./Pagination";
 
@@ -23,6 +26,8 @@ type Props = {
 };
 
 export default function Feed({ results, page, onPageChange }: Props) {
+  const [expandedKey, setExpandedKey] = useState<number | null>(null);
+
   if (!results || results.length === 0) {
     return (
       <div style={{ textAlign: "center", marginTop: 40, color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: 14 }}>
@@ -39,13 +44,18 @@ export default function Feed({ results, page, onPageChange }: Props) {
 
   return (
     <div style={{ maxWidth: 820, margin: "20px auto", padding: "0 20px 20px", width: "100%", boxSizing: "border-box" }}>
-      {paged.map(({ item, index }) => (
-        <UpgradeCard
-          key={item._key || index}
-          data={item}
-          isNew={index === 0 && !!item._key}
-        />
-      ))}
+      {paged.map(({ item, index }) => {
+        const cardKey = item._key || index;
+        return (
+          <UpgradeCard
+            key={cardKey}
+            data={item}
+            isNew={index === 0 && !!item._key}
+            expanded={expandedKey === cardKey}
+            onToggle={() => setExpandedKey((prev) => (prev === cardKey ? null : cardKey))}
+          />
+        );
+      })}
       <Pagination page={currentPage} totalPages={totalPages} onChange={onPageChange} />
     </div>
   );

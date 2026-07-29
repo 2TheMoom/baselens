@@ -38,6 +38,7 @@ export default function FeedPage() {
   const [filter, setFilter] = useState<FilterLevel>("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   async function loadUpgrades() {
     const { data, error } = await supabase
@@ -365,7 +366,12 @@ export default function FeedPage() {
           <>
             {pagedUpgrades.map((upgrade) => (
               <div key={upgrade.id}>
-                <UpgradeCard data={upgrade} isNew={false} />
+                <UpgradeCard
+                  data={upgrade}
+                  isNew={false}
+                  expanded={expandedId === upgrade.id}
+                  onToggle={() => setExpandedId((prev) => (prev === upgrade.id ? null : upgrade.id))}
+                />
                 {upgrade.source_url && (
                   <div style={{ marginTop: -12, marginBottom: 20, paddingLeft: 4 }}>
                     <a
